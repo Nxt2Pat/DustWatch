@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-bg-base: #F5F4FC;
+  --color-bg-card: #FFFFFF;
+  --color-bg-pill: #EDEBF8;
+  
+  --color-brand-primary: #5E54E3;
+  --color-brand-hover: #4A40CD;
+  --color-brand-light: #F0EFFD;
+  
+  --color-text-primary: #1F1A3A;
+  --color-text-secondary: #817CA5;
+  --color-text-muted: #B2ADC8;
+  
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", "IBM Plex Sans Thai", -apple-system, sans-serif;
+  
+  --animate-float-1: float-1 20s ease-in-out infinite;
+  --animate-float-2: float-2 25s ease-in-out infinite;
+  --animate-float-3: float-3 18s ease-in-out infinite;
+}
+
+@keyframes float-1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translate(6%, 5%) scale(1.1);
+    opacity: 0.6;
+  }
+}
+
+@keyframes float-2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1.05);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-8%, -4%) scale(0.95);
+    opacity: 0.45;
+  }
+}
+
+@keyframes float-3 {
+  0%, 100% {
+    transform: translate(0, 0) scale(0.9);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translate(5%, -7%) scale(1.05);
+    opacity: 0.35;
+  }
+}
+
+:root {
+  --bg-base: #F5F4FC;
+  --bg-card: #FFFFFF;
+  --brand-primary: #5E54E3;
+  --text-primary: #1F1A3A;
+  --text-secondary: #817CA5;
+  
+  --card-shadow: 0 15px 35px -10px rgba(94, 84, 227, 0.08);
+  --card-shadow-hover: 0 20px 45px -5px rgba(94, 84, 227, 0.16);
+  --card-radius: 24px;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Premium Card with Glass elements */
+.premium-card {
+  background: var(--color-bg-card);
+  border: 1px solid rgba(94, 84, 227, 0.06);
+  box-shadow: var(--card-shadow);
+  border-radius: var(--card-radius);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow-hover);
+  border-color: rgba(94, 84, 227, 0.15);
+}
+
+/* Premium Navigation Panels */
+.premium-panel {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(94, 84, 227, 0.08);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border-radius: 30px;
+  box-shadow: 0 12px 30px -10px rgba(94, 84, 227, 0.12);
+}
+
+/* Interactive Pill Toggles */
+.pill-button {
+  background-color: var(--color-bg-pill);
+  color: var(--color-text-secondary);
+  border-radius: 14px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pill-button:hover {
+  background-color: rgba(94, 84, 227, 0.08);
+  color: var(--color-brand-primary);
+}
+
+.pill-button.active {
+  background-color: var(--color-brand-primary);
+  color: #FFFFFF;
+  box-shadow: 0 8px 16px -4px rgba(94, 84, 227, 0.3);
+}
+
+/* Hide scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .landscape-hide {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-1,
+  .animate-float-2,
+  .animate-float-3 {
+    animation: none !important;
+    opacity: 0.3 !important;
+    transform: none !important;
+  }
+}
