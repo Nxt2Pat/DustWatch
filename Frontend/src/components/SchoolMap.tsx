@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { useStore } from '../store';
 import { request } from '../api/client';
-import type { NodeData, NodeMeta } from '../types/sensor';
 import { ShieldAlert, Layers, RotateCw, Eye } from 'lucide-react';
 
 interface Room {
