@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DustWatch - ระบบเฝ้าระวังคุณภาพอากาศและทำนายผล PM2.5 เชิงป้องกันในสถานศึกษา</title>
+    <meta name="description"
+        content="ระบบตรวจวัดและทำนายผลฝุ่นละออง PM2.5 ล่วงหน้าด้วยปัญญาประดิษฐ์เพื่อความปลอดภัยในโรงเรียน โครงการ NSC 2026">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+
+    <!-- Header Navigation -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                        stroke="url(#logo-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M12 6V12L16 14" stroke="url(#logo-grad)" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <circle cx="9" cy="9" r="1.5" fill="#38bdf8" />
+                    <circle cx="15" cy="8" r="1" fill="#818cf8" />
+                    <circle cx="8" cy="14" r="1" fill="#fb7185" />
+                </svg>
+                <span class="logo-text">Dust<span>Watch</span></span>
+            </div>
+            <nav class="nav-links">
+                <a href="#hero" class="active">หน้าแรก</a>
+                <a href="#features">คุณสมบัติ</a>
+                <a href="#architecture">สถาปัตยกรรม</a>
+                <a href="#process">ขั้นตอนทำงาน</a>
+                <a href="#simulator">เครื่องจำลอง AQI</a>
+            </nav>
+            <div class="nav-actions">
+                <a href="http://localhost:5173" target="_blank" class="btn-primary-nav">
+                    <span>เปิด Dashboard</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+
+        <!-- Hero Section -->
+        <section id="hero" class="hero-section">
+            <div class="hero-bg-glow"></div>
+            <div class="grid-overlay"></div>
+            <div class="container hero-container">
+                <div class="hero-content">
+                    <span class="badge">NSC 2026 Project Showcase</span>
+                    <h1 class="hero-title">ระบบเฝ้าระวังคุณภาพอากาศและทำนายผล PM2.5 <br><span
+                            class="gradient-text">เชิงป้องกันในสถานศึกษา</span></h1>
+                    <p class="hero-subtitle">ปกป้องสุขภาพของนักเรียนและบุคลากรจากฝุ่นละอองขนาดเล็ก
+                        ด้วยเทคโนโลยีโครงข่ายเซนเซอร์ IoT กระจายศูนย์ และระบบพยากรณ์แนวโน้มฝุ่นล่วงหน้าด้วยปัญญาประดิษฐ์
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="#simulator" class="btn btn-primary">
+                            <span>ทดลองเล่น Simulator</span>
+                        </a>
+                        <a href="#features" class="btn btn-secondary">
+                            <span>เรียนรู้เพิ่มเติม</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="hero-visual">
+                    <div class="glass-card main-preview-card">
+                        <div class="card-header-accent"></div>
+                        <div class="preview-header">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                            <span class="preview-title">DustWatch LIVE Nodes</span>
+                        </div>
+                        <div class="preview-map-sim">
+                            <!-- Visual placeholder representing the school map -->
+                            <div class="node-pulse green" style="top: 25%; left: 30%;" data-node="อาคาร 1"></div>
+                            <div class="node-pulse yellow" style="top: 45%; left: 70%;" data-node="สนามฟุตบอล"></div>
+                            <div class="node-pulse orange" style="top: 75%; left: 20%;" data-node="โรงอาหาร"></div>
+                            <div class="node-pulse red" style="top: 60%; left: 50%;" data-node="อาคารอเนกประสงค์"></div>
+                        </div>
+                        <div class="preview-metrics">
+                            <div class="metric-box">
+                                <span class="metric-label">AQI เฉลี่ย</span>
+                                <span class="metric-val text-yellow">42</span>
+                                <span class="metric-status">คุณภาพปานกลาง</span>
+                            </div>
+                            <div class="metric-box">
+                                <span class="metric-label">จำนวนโหนดที่ออนไลน์</span>
+                                <span class="metric-val text-green">4 / 4</span>
+                                <span class="metric-status">ระบบปกติ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <div class="container grid-4">
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper blue">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                    </div>
+                    <h3>ความละเอียดสูง</h3>
+                    <p>ตรวจวัดรายพื้นที่ในโรงเรียนแบบเจาะจงจุดจริง ไม่ใช่ค่าเฉลี่ยของทั้งจังหวัด</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper purple">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                            <line x1="12" y1="22.08" x2="12" y2="12" />
+                        </svg>
+                    </div>
+                    <h3>AI พยากรณ์ฝุ่น</h3>
+                    <p>คาดการณ์ PM2.5 ล่วงหน้า 1, 3 และ 6 ชั่วโมงด้วยแบบจำลอง XGBoost & LightGBM</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper green">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                    </div>
+                    <h3>DCS Smart Filter</h3>
+                    <p>ระบบตรวจสอบความถูกต้องข้อมูล ป้องกันความชื้นสัมพัทธ์สูงที่ทำให้ค่าเซนเซอร์คลาดเคลื่อน</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper orange">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            <line x1="12" y1="9" x2="12" y2="13" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                    </div>
+                    <h3>แจ้งเตือนทันที</h3>
+                    <p>ส่งข้อความแจ้งเตือนพร้อมรูปภาพสรุปสถานการณ์เข้ากลุ่ม LINE ทันทีเมื่อค่าฝุ่นเกินเกณฑ์มาตรฐาน</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- About & Core Features Section -->
+        <section id="features" class="section features-section">
+            <div class="container">
+                <div class="section-header text-center">
+                    <span class="section-label">ทำไมต้องเป็น DustWatch?</span>
+                    <h2>แก้ปัญหาการวัดฝุ่นที่ไม่สอดคล้องกับสภาพจริง</h2>
+                    <p class="section-desc">ค่าฝุ่นจากหน่วยงานรัฐมักวัดจากสถานีขนาดใหญ่ที่มีระยะห่างไกล
+                        ซึ่งอาจมีความแตกต่างจากคุณภาพอากาศรอบบริเวณโรงเรียนของคุณอย่างสิ้นเชิง DustWatch
+                        เข้ามาปิดช่องว่างนี้</p>
+                </div>
+
+                <div class="grid-2 align-center">
+                    <div class="features-text-side">
+                        <div class="feature-item">
+                            <div class="feature-num">01</div>
+                            <div class="feature-info">
+                                <h3>โครงข่ายเซนเซอร์ IoT กระจายศูนย์</h3>
+                                <p>ติดตั้งเซนเซอร์วัดฝุ่น PM2.5, PM1.0, PM10 และสภาพอากาศแวดล้อม เช่น อุณหภูมิ ความชื้น
+                                    ความกดอากาศ เสียง และสารเคมีอินทรีย์ระเหยง่าย (TVOCs) ตามจุดสำคัญในโรงเรียน
+                                    (สนามฟุตบอล, โรงอาหาร, อาคารเรียน)</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-num">02</div>
+                            <div class="feature-info">
+                                <h3>ระบบประมวลผลความน่าเชื่อถือเซนเซอร์ (DCS)</h3>
+                                <p>เซนเซอร์วัดฝุ่นระบบแสงเลเซอร์ปกติจะอ่านค่าเพี้ยนสูงขึ้นมากเมื่ออากาศชื้นจัด เช่น
+                                    หลังฝนตก ระบบของเราใช้อัลกอริทึมวิเคราะห์ความชื้นเพื่อประเมินระดับความน่าเชื่อถือ
+                                    (Data Confidence Score) เตือนให้ครูระวังผลลัพธ์ที่ผิดเพี้ยน</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-num">03</div>
+                            <div class="feature-info">
+                                <h3>AI Forecasting ทำนายผลล่วงหน้าเพื่อเตรียมพร้อม</h3>
+                                <p>ป้อนข้อมูลสภาพอากาศย้อนหลังลงโมเดล Machine Learning เพื่อคาดคะเนทิศทางของฝุ่น
+                                    ช่วยให้ครูเวรสามารถเลือกกิจกรรมช่วงเช้า/กลางวันให้นักเรียนได้อย่างปลอดภัยสูงสุด</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="features-image-side">
+                        <div class="glass-card feature-graphic-card">
+                            <div class="chart-mock">
+                                <div class="chart-header">
+                                    <h4>แนวโน้มฝุ่น PM2.5 (ย้อนหลังและพยากรณ์ล่วงหน้า)</h4>
+                                    <span class="badge-active">XGBoost Model Active</span>
+                                </div>
+                                <div class="chart-bars">
+                                    <div class="chart-line-wrapper">
+                                        <div class="chart-y-axis">
+                                            <span>50</span>
+                                            <span>37.5</span>
+                                            <span>25</span>
+                                            <span>15</span>
+                                            <span>0</span>
+                                        </div>
+                                        <div class="chart-area-svg">
+                                            <svg viewBox="0 0 400 150" class="svg-chart">
+                                                <!-- Threshold Line -->
+                                                <line x1="0" y1="50" x2="400" y2="50" stroke="#f43f5e"
+                                                    stroke-dasharray="4,4" />
+                                                <text x="350" y="45" fill="#f43f5e" font-size="10">เกณฑ์สีแดง
+                                                    (37.5)</text>
+                                                <!-- Historical Data -->
+                                                <path d="M 0 120 Q 50 110 100 130 T 200 90 T 250 65" fill="none"
+                                                    stroke="#38bdf8" stroke-width="3" />
+                                                <circle cx="250" cy="65" r="5" fill="#38bdf8" />
+                                                <text x="220" y="55" fill="#38bdf8" font-size="10">ปัจจุบัน (28
+                                                    µg/m³)</text>
+                                                <!-- Forecasted Data -->
+                                                <path d="M 250 65 Q 280 50 300 45 T 350 35 T 400 30" fill="none"
+                                                    stroke="#818cf8" stroke-width="3" stroke-dasharray="5,3" />
+                                                <circle cx="300" cy="45" r="4" fill="#818cf8" />
+                                                <circle cx="350" cy="35" r="4" fill="#818cf8" />
+                                                <circle cx="400" cy="30" r="4" fill="#818cf8" />
+                                                <!-- CI Band (Confidence Interval) -->
+                                                <path
+                                                    d="M 250 65 L 300 35 L 350 20 L 400 10 L 400 50 L 350 60 L 300 70 Z"
+                                                    fill="rgba(129, 140, 248, 0.15)" stroke="none" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="chart-x-axis">
+                                        <span>3 ชม. ก่อน</span>
+                                        <span>ปัจจุบัน</span>
+                                        <span>+1 ชม.</span>
+                                        <span>+3 ชม.</span>
+                                        <span>+6 ชม.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- System Architecture Section -->
+        <section id="architecture" class="section architecture-section bg-darker">
+            <div class="container">
+                <div class="section-header text-center">
+                    <span class="section-label">System Architecture</span>
+                    <h2>สถาปัตยกรรมและการทำงานร่วมกันของระบบ</h2>
+                    <p class="section-desc">DustWatch แบ่งสถาปัตยกรรมออกเป็น 4 ส่วนหลัก
+                        ทำงานร่วมกันอย่างไร้รอยต่อเพื่อประสิทธิภาพสูงสุด</p>
+                </div>
+
+                <div class="tabs-container">
+                    <div class="tabs-buttons">
+                        <button class="tab-btn active" data-tab="iot">
+                            <span>1. IoT Nodes (อุปกรณ์)</span>
+                        </button>
+                        <button class="tab-btn" data-tab="backend">
+                            <span>2. Backend & AI Engine</span>
+                        </button>
+                        <button class="tab-btn" data-tab="frontend">
+                            <span>3. Web Dashboard (ผู้ใช้)</span>
+                        </button>
+                        <button class="tab-btn" data-tab="panel">
+                            <span>4. Admin Panel (ควบคุม)</span>
+                        </button>
+                    </div>
+
+                    <div class="tabs-content">
+                        <!-- Tab 1: IoT -->
+                        <div class="tab-panel active" id="iot">
+                            <div class="grid-2 align-center">
+                                <div class="tab-text">
+                                    <h3>ฮาร์ดแวร์เก็บข้อมูลสภาพแวดล้อมภาคสนาม</h3>
+                                    <p>โหนดฮาร์ดแวร์สร้างขึ้นโดยใช้บอร์ดไมโครคอนโทรลเลอร์ <strong>ESP32</strong>
+                                        เป็นแกนประมวลผลหลัก ร่วมกับเซนเซอร์คุณภาพสูง:</p>
+                                    <ul class="styled-list">
+                                        <li><strong>PMS5003</strong>: เซนเซอร์วัดระดับฝุ่นละอองขนาดเล็ก PM1.0, PM2.5,
+                                            PM10 ด้วยแสงเลเซอร์</li>
+                                        <li><strong>BME680</strong>: วัดอุณหภูมิ, ความชื้นสัมพัทธ์, ความกดอากาศ
+                                            และสารระเหยง่าย (Gas TVOCs)</li>
+                                        <li><strong>เซนเซอร์ระดับความดังเสียง</strong>: ตรวจวัดระดับเสียงโดยรอบโรงเรียน
+                                        </li>
+                                        <li><strong>การสื่อสาร</strong>: ส่งผ่าน Wi-Fi (MQTT protocol) ไปยังฐานข้อมูล
+                                            โดยรองรับโครงข่าย LoRaWAN สำหรับพิกัดห่างไกล</li>
+                                    </ul>
+                                </div>
+                                <div class="tab-visual">
+                                    <div class="glass-card hardware-card">
+                                        <div class="circuit-grid">
+                                            <div class="chip esp32">ESP32 Controller</div>
+                                            <div class="sensor-node laser">Laser PMS5003</div>
+                                            <div class="sensor-node env">BME680 Sensor</div>
+                                            <div class="sensor-node sound">Sound Level</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 2: Backend -->
+                        <div class="tab-panel" id="backend">
+                            <div class="grid-2 align-center">
+                                <div class="tab-text">
+                                    <h3>ฐานการประมวลผล ข้อมูลแบบอนุกรมเวลา และ AI</h3>
+                                    <p>สมองส่วนกลางของระบบ พัฒนาด้วยความสามารถในการรองรับการรับส่งข้อมูลจำนวนมาก:</p>
+                                    <ul class="styled-list">
+                                        <li><strong>FastAPI Backend</strong>: ประตูเชื่อมรับข้อมูลความเร็วสูงผ่าน REST
+                                            API และจัดการผู้ใช้</li>
+                                        <li><strong>InfluxDB Database</strong>: ฐานข้อมูล Time-Series
+                                            เพื่อการบันทึกข้อมูลเซนเซอร์ที่มีการอัปเดตแบบวินาทีต่อวินาที</li>
+                                        <li><strong>DCS Processing</strong>:
+                                            คำนวณความสมเหตุสมผลของข้อมูลแบบเรียลไทม์เพื่อตัดข้อมูลช่วงมีละอองน้ำ</li>
+                                        <li><strong>XGBoost & LightGBM</strong>:
+                                            แบบจำลองปัญญาประดิษฐ์ที่ถูกเทรนด้วยข้อมูลสภาพอากาศ
+                                            เพื่อทำนายผลลัพธ์ระดับฝุ่นในช่วง 1-6 ชม. ข้างหน้า</li>
+                                    </ul>
+                                </div>
+                                <div class="tab-visual">
+                                    <div class="glass-card code-visual">
+                                        <pre><code><span class="keyword">def</span> <span class="function">calculate_dcs</span>(humidity, temp):
+    <span class="comment"># คำนวณความชื้นสัมพัทธ์สะสม</span>
+    <span class="keyword">if</span> humidity > <span class="number">85.0</span>:
+        confidence = <span class="number">100.0</span> - (humidity - <span class="number">85.0</span>) * <span class="number">4.0</span>
+    <span class="keyword">else</span>:
+        confidence = <span class="number">100.0</span>
+    <span class="keyword">return</span> max(<span class="number">10.0</span>, confidence)</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 3: Frontend -->
+                        <div class="tab-panel" id="frontend">
+                            <div class="grid-2 align-center">
+                                <div class="tab-text">
+                                    <h3>แดชบอร์ดแสดงผลเชิงภาพและโต้ตอบได้</h3>
+                                    <p>ส่วนการนำเสนอข้อมูลเพื่อสร้างความตระหนักรู้และช่วยเหลือในการตัดสินใจ:</p>
+                                    <ul class="styled-list">
+                                        <li><strong>Interactive School Map</strong>:
+                                            แผนที่จำลองบริเวณโรงเรียนที่ระบุสีของโหนดตามเกณฑ์ดัชนี AQI ล่าสุด</li>
+                                        <li><strong>Detail Modal</strong>: คลิกดูระดับมลพิษทางอากาศ ข้อมูลพยากรณ์ฝุ่น
+                                            และระดับความน่าเชื่อถือ (DCS)</li>
+                                        <li><strong>Quick QR Code Public Page</strong>:
+                                            สแกนเพื่อเข้าถึงหน้ารายงานคุณภาพอากาศพกพาแบบด่วนในพิกัดนั้นๆ
+                                            โดยตรงผ่านสมาร์ทโฟน</li>
+                                    </ul>
+                                </div>
+                                <div class="tab-visual">
+                                    <div class="glass-card phone-frame">
+                                        <div class="phone-screen">
+                                            <div class="phone-header">DustWatch Mobile</div>
+                                            <div class="phone-body">
+                                                <div class="badge-mini orange">PM2.5: 32 µg/m³</div>
+                                                <h5>อาคาร 2 (โรงอาหาร)</h5>
+                                                <p class="phone-desc">เริ่มมีผลต่อสุขภาพ
+                                                    กลุ่มเสี่ยงควรระวังและสวมหน้ากากอนามัย</p>
+                                                <div class="phone-chart-sim"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 4: Panel -->
+                        <div class="tab-panel" id="panel">
+                            <div class="grid-2 align-center">
+                                <div class="tab-text">
+                                    <h3>หน้าต่างผู้ดูแลระบบและการตั้งค่าเกณฑ์ระบบ</h3>
+                                    <p>เครื่องมือสำหรับจัดการระบบและควบคุมโหนดเซนเซอร์ของสถานศึกษา:</p>
+                                    <ul class="styled-list">
+                                        <li><strong>Node Management</strong>: เพิ่ม แก้ไข ย้ายพิกัด X-Y ของโหนด
+                                            และปิดใช้งานโหนดชั่วคราว</li>
+                                        <li><strong>System Thresholds</strong>: ปรับระดับเพดานเตือนภัยค่าฝุ่นละออง PM2.5
+                                            ตามนโยบายของโรงเรียน</li>
+                                        <li><strong>LINE Notify Token</strong>: ตั้งค่ากุญแจ API Token ของแอปพลิเคชัน
+                                            LINE เพื่อเปลี่ยนกลุ่มในการแจ้งเตือนทันที</li>
+                                    </ul>
+                                </div>
+                                <div class="tab-visual">
+                                    <div class="glass-card admin-form-card">
+                                        <h4>แก้ไขโหนด: อาคารอเนกประสงค์</h4>
+                                        <div class="input-group">
+                                            <label>ชื่อโหนด</label>
+                                            <input type="text" value="อาคารอเนกประสงค์" disabled>
+                                        </div>
+                                        <div class="input-group">
+                                            <label>LINE Token</label>
+                                            <input type="password" value="••••••••••••••••••••••••" disabled>
+                                        </div>
+                                        <button class="btn-primary-mini" disabled>บันทึกการตั้งค่า</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Process Timeline Section -->
+        <section id="process" class="section process-section">
+            <div class="container">
+                <div class="section-header text-center">
+                    <span class="section-label">Work Flow</span>
+                    <h2>ขั้นตอนการประมวลผลข้อมูล</h2>
+                    <p class="section-desc">การเดินทางของข้อมูลตั้งแต่ชั้นเซนเซอร์ผ่านระบบ AI
+                        ไปจนถึงการแจ้งเตือนผู้ใช้งาน</p>
+                </div>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-badge">1</div>
+                        <div class="timeline-card glass-card">
+                            <h4>ตรวจวัดฝุ่นและสภาพแวดล้อม</h4>
+                            <p>โหนดตรวจวัดตามจุดต่างๆ อ่านข้อมูล PM2.5, อุณหภูมิ, ความชื้นสะสม ส่งผ่าน Wi-Fi/LoRa
+                                ด้วยโปรโตคอล MQTT ในทุกๆ 10 วินาที</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-badge">2</div>
+                        <div class="timeline-card glass-card">
+                            <h4>ตรวจสอบความเชื่อถือของข้อมูล (DCS)</h4>
+                            <p>ระบบ Backend คำนวณหาค่าเบี่ยงเบนสะสมความชื้นสัมพัทธ์ หากมีความชื้นสูงเกินเกณฑ์
+                                ระบบจะลดค่า Data Confidence เพื่อให้แดชบอร์ดระวังค่าดัชนีคลาดเคลื่อน</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-badge">3</div>
+                        <div class="timeline-card glass-card">
+                            <h4>พยากรณ์ฝุ่นด้วย AI Engine</h4>
+                            <p>ข้อมูลสภาพแวดล้อมถูกป้อนให้กับโมเดล XGBoost/LightGBM บนคลาวด์/หลังบ้าน
+                                ประมวลผลทำนายแนวโน้มฝุ่นในระยะ 1, 3 และ 6 ชั่วโมงข้างหน้า</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-badge">4</div>
+                        <div class="timeline-card glass-card">
+                            <h4>อัปเดตผู้ใช้และส่งการเตือนด่วน</h4>
+                            <p>หน้า Dashboard อัปเดตทันที หากระดับฝุ่นเกินขีดจำกัด (เช่น เกณฑ์มาตรฐานที่กำหนด)
+                                ระบบจะทำการดึง API ส่งภาพพยากรณ์และข้อความเข้ากลุ่ม LINE</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Simulator Section -->
+        <section id="simulator" class="section simulator-section bg-darker">
+            <div class="container">
+                <div class="section-header text-center">
+                    <span class="section-label">Interactive Demo</span>
+                    <h2>จำลองดัชนีคุณภาพอากาศและคำแนะนำ</h2>
+                    <p class="section-desc">ทดลองปรับเปลี่ยนระดับความเข้มข้นของฝุ่นละออง PM2.5
+                        (หน่วยเป็นไมโครกรัมต่อลูกบาศก์เมตร) เพื่อดูการเปลี่ยนแปลงระดับคุณภาพอากาศและการเตือนภัยของระบบ
+                    </p>
+                </div>
+
+                <div class="simulator-box glass-card">
+                    <div class="sim-grid">
+                        <div class="sim-control-panel">
+                            <h3>ปรับระดับฝุ่น PM2.5</h3>
+                            <div class="slider-container">
+                                <input type="range" id="pm25-slider" min="0" max="150" value="28" class="range-slider">
+                                <div class="slider-labels">
+                                    <span>0 µg/m³</span>
+                                    <span>75 µg/m³</span>
+                                    <span>150 µg/m³</span>
+                                </div>
+                            </div>
+
+                            <div class="sim-metrics-box">
+                                <div class="sim-metric">
+                                    <span class="sim-metric-title">ค่า PM2.5 ที่จำลอง</span>
+                                    <span class="sim-metric-num" id="sim-pm-val">28</span>
+                                    <span class="sim-metric-unit">µg/m³</span>
+                                </div>
+                                <div class="sim-metric">
+                                    <span class="sim-metric-title">ดัชนี AQI (ประมาณ)</span>
+                                    <span class="sim-metric-num" id="sim-aqi-val">42</span>
+                                    <span class="sim-metric-unit">คะแนน AQI</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sim-display-panel" id="sim-bg-panel">
+                            <div class="sim-badge" id="sim-status-badge">คุณภาพปานกลาง</div>
+                            <div class="sim-guide-box">
+                                <h4>คำแนะนำสำหรับสถานศึกษา</h4>
+                                <p id="sim-guide-text">คุณภาพอากาศปานกลาง
+                                    นักเรียนทั่วไปสามารถทำกิจกรรมกลางแจ้งได้ตามปกติ
+                                    สำหรับนักเรียนที่เป็นกลุ่มเสี่ยงควรระวังอาการระคายเคืองตาหรือไอเบื้องต้น</p>
+                            </div>
+
+                            <div class="sim-line-notify">
+                                <div class="line-header">
+                                    <svg class="line-icon" width="20" height="20" viewBox="0 0 24 24" fill="#06C755">
+                                        <path
+                                            d="M24 10.3c0-5.2-5.4-9.3-12-9.3s-12 4.1-12 9.3c0 4.6 4.3 8.5 10.1 9.2.4.1.9.3 1 .7l.1 1.6c0 .4-.2.8-.5 1l-1.3 1.2c-.4.4-.2 1 .3.9l3.5-.8c1.3-.3 2.6-.9 3.7-1.7 5.7-.9 9.1-4.8 9.1-9.1zm-15.6.8h-2c-.3 0-.5-.2-.5-.5s.2-.5.5-.5h2c.3 0 .5.2.5.5s-.2.5-.5.5zm4 0h-2c-.3 0-.5-.2-.5-.5s.2-.5.5-.5h2c.3 0 .5.2.5.5s-.2.5-.5.5zm4 0h-2c-.3 0-.5-.2-.5-.5s.2-.5.5-.5h2c.3 0 .5.2.5.5s-.2.5-.5.5z" />
+                                    </svg>
+                                    <span>LINE Notify - โรงเรียนสาธิตฯ</span>
+                                </div>
+                                <div class="line-message-content">
+                                    <p id="line-alert-msg">แจ้งเตือน: ค่าฝุ่นละออง PM2.5 อยู่ในเกณฑ์ปกติ
+                                        ระบบยังไม่มีการแจ้งเตือนเพิ่มเติม</p>
+                                    <span class="line-timestamp" id="line-time">10:45 AM</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="footer-team">คณะผู้พัฒนาซอฟต์แวร์ระบบ DustWatch - โรงเรียนเทพศิรินทร์ สมุทรปราการ</p>
+            <p class="footer-nsc">พัฒนาเพื่อโครงการซอฟต์แวร์สนับสนุนความปลอดภัยในสถานศึกษา (NSC 2026)</p>
+            <p class="footer-copy">&copy; 2026 DustWatch Open Source Project. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- SVG Gradients -->
+    <svg width="0" height="0" style="position: absolute;">
+        <defs>
+            <linearGradient id="logo-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#38bdf8" />
+                <stop offset="50%" stop-color="#818cf8" />
+                <stop offset="100%" stop-color="#ec4899" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <script src="./script.js"></script>
+</body>
+
+</html>
