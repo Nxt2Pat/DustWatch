@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  --bg-space-deep: #05060f;
+  --bg-space-mid: radial-gradient(120% 90% at 50% -10%, #131a3d 0%, #05060f 60%);
+  --nebula-teal: rgba(20, 184, 166, 0.18);
+  --nebula-violet: rgba(124, 58, 237, 0.16);
+  --star-dot: rgba(232, 236, 244, 0.6);
+  
+  --glass-fill: rgba(255, 255, 255, 0.06);
+  --glass-fill-raised: rgba(255, 255, 255, 0.10);
+  --glass-blur: blur(24px) saturate(160%);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans Thai', 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-space-deep);
+  background-image: radial-gradient(120% 90% at 50% -10%, #131a3d 0%, #05060f 60%);
+  color: #f5f7fc;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  position: relative;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Glass Card styling */
+.glass-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glass edge highlight */
+.glass-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.25), transparent);
+  pointer-events: none;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-radius: 28px;
+}
+
+/* Background Nebula Blobs */
+.nebula-glow-teal {
+  position: fixed;
+  top: -10%;
+  left: -10%;
+  width: 50vw;
+  height: 50vw;
+  max-width: 600px;
+  max-height: 600px;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.18) 0%, transparent 70%);
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.nebula-glow-violet {
+  position: fixed;
+  bottom: -10%;
+  right: -10%;
+  width: 50vw;
+  height: 50vw;
+  max-width: 600px;
+  max-height: 600px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.16) 0%, transparent 70%);
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Star Twinkle Animation */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.9; }
+}
+
+.star-field {
+  position: fixed;
+  inset: 0;
+  background-image: 
+    radial-gradient(1px 1px at 20px 30px, rgba(232, 236, 244, 0.6), rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 100px 150px, rgba(232, 236, 244, 0.8), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 200px 80px, rgba(232, 236, 244, 0.5), rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 300px 300px, rgba(232, 236, 244, 0.7), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 50px 250px, rgba(232, 236, 244, 0.4), rgba(0,0,0,0));
+  background-size: 350px 350px;
+  pointer-events: none;
+  z-index: 0;
+  animation: twinkle 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star-field {
+    animation: none;
+  }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  /* Hide floating bottom tab bar in landscape on mobile to maximize graphing area */
+  .fixed.bottom-3 {
+    display: none !important;
+  }
+}
