@@ -4,12 +4,12 @@ import { DataSourceBadge } from '../DataSourceBadge';
 
 const navItems = [
   { to: '/', label: 'Dashboard' },
-  { to: '/timeseries', label: 'Lab Analyser' },
+  { to: '/timeseries', label: 'Analyser' },
   { to: '/ml', label: 'ML Portal' },
   { to: '/map-builder', label: 'Map Builder' },
   { to: '/history', label: 'History' },
   { to: '/alerts', label: 'Alerts' },
-  { to: '/dev/logs', label: 'Dev Portal' },
+  { to: '/dev/logs', label: 'Dev Logs' },
 ];
 
 export default function TopNavBar({ isConnected }: { isConnected: boolean }) {
@@ -38,10 +38,9 @@ export default function TopNavBar({ isConnected }: { isConnected: boolean }) {
                   to={item.to}
                   end={item.to === '/'}
                   className={({ isActive }) =>
-                    `px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      isActive
-                        ? 'text-white bg-white/10'
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                    `px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isActive
+                      ? 'text-white bg-white/10'
+                      : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                     }`
                   }
                 >
@@ -64,11 +63,10 @@ export default function TopNavBar({ isConnected }: { isConnected: boolean }) {
               </div>
 
               {/* WebSocket status */}
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-mono transition-colors duration-300 ${
-                isConnected
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-mono transition-colors duration-300 ${isConnected
                   ? 'text-green-400 bg-green-500/10 border-green-500/20'
                   : 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20 animate-pulse'
-              }`}>
+                }`}>
                 <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? 'bg-green-400' : 'bg-yellow-400'}`}></span>
                 {isConnected ? 'LIVE' : 'RECONNECTING'}
               </div>

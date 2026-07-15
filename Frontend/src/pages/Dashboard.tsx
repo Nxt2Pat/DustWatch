@@ -33,45 +33,61 @@ export default function Dashboard() {
 
   // Colors & Glow mappings matching the Air Quality Index standards
   const getAQIStyles = (aqi: number) => {
-    if (aqi <= 25) return { 
+    if (aqi <= 5.0) return { 
       text: 'text-[#0284c7]', 
       border: 'border-[#0284c7]/20', 
       bg: 'bg-[#0284c7]/5', 
       glow: 'shadow-[0_4px_20px_-2px_rgba(2,132,199,0.12)] hover:border-[#0284c7]/40',
       dot: 'bg-[#0284c7]',
-      label: 'ดีมาก (Very Good)' 
+      label: 'สอดคล้องเกณฑ์ WHO (0-5)' 
     };
-    if (aqi <= 50) return { 
+    if (aqi <= 10.0) return { 
       text: 'text-[#10b981]', 
       border: 'border-[#10b981]/20', 
       bg: 'bg-[#10b981]/5', 
       glow: 'shadow-[0_4px_20px_-2px_rgba(16,185,129,0.12)] hover:border-[#10b981]/40',
       dot: 'bg-[#10b981]',
-      label: 'ดี (Good)' 
+      label: 'เกินเกณฑ์ WHO 1-2 เท่า (5-10)' 
     };
-    if (aqi <= 100) return { 
+    if (aqi <= 15.0) return { 
       text: 'text-[#eab308]', 
       border: 'border-[#eab308]/20', 
       bg: 'bg-[#eab308]/5', 
       glow: 'shadow-[0_4px_20px_-2px_rgba(234,179,8,0.12)] hover:border-[#eab308]/40',
       dot: 'bg-[#eab308]',
-      label: 'ปานกลาง (Moderate)' 
+      label: 'เกินเกณฑ์ WHO 2-3 เท่า (10-15)' 
     };
-    if (aqi <= 200) return { 
+    if (aqi <= 25.0) return { 
       text: 'text-[#f97316]', 
       border: 'border-[#f97316]/20', 
       bg: 'bg-[#f97316]/5', 
       glow: 'shadow-[0_4px_20px_-2px_rgba(249,115,22,0.12)] hover:border-[#f97316]/40',
       dot: 'bg-[#f97316]',
-      label: 'เริ่มมีผลต่อสุขภาพ' 
+      label: 'เกินเกณฑ์ WHO 3-5 เท่า (15-25)' 
     };
-    return { 
+    if (aqi <= 35.0) return { 
       text: 'text-[#ef4444]', 
       border: 'border-[#ef4444]/20', 
       bg: 'bg-[#ef4444]/5', 
       glow: 'shadow-[0_4px_20px_-2px_rgba(239,68,68,0.12)] hover:border-[#ef4444]/40',
       dot: 'bg-[#ef4444]',
-      label: 'มีผลต่อสุขภาพรุนแรง' 
+      label: 'เกินเกณฑ์ WHO 5-7 เท่า (25-35)' 
+    };
+    if (aqi <= 50.0) return { 
+      text: 'text-[#8b5cf6]', 
+      border: 'border-[#8b5cf6]/20', 
+      bg: 'bg-[#8b5cf6]/5', 
+      glow: 'shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] hover:border-[#8b5cf6]/40',
+      dot: 'bg-[#8b5cf6]',
+      label: 'เกินเกณฑ์ WHO 7-10 เท่า (35-50)' 
+    };
+    return { 
+      text: 'text-[#991b1b]', 
+      border: 'border-[#991b1b]/20', 
+      bg: 'bg-[#991b1b]/5', 
+      glow: 'shadow-[0_4px_20px_-2px_rgba(153,27,27,0.12)] hover:border-[#991b1b]/40',
+      dot: 'bg-[#991b1b]',
+      label: 'เกินเกณฑ์ WHO >10 เท่า (>50)' 
     };
   };
 

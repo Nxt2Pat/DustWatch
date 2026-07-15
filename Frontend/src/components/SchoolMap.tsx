@@ -83,21 +83,25 @@ export default function SchoolMap() {
     })
     .map(([id, data]) => ({ id, data, meta: nodesMeta[id] }));
 
-  // Color mapping based on AQI
+  // Color mapping based on AQI (WHO Guidelines)
   const getAQIColorHex = (score: number) => {
-    if (score <= 25) return 0x0284c7; // Very Good (Sky)
-    if (score <= 50) return 0x10b981; // Good (Green)
-    if (score <= 100) return 0xeab308; // Moderate (Yellow)
-    if (score <= 200) return 0xf97316; // Unhealthy Sensitive (Orange)
-    return 0xef4444; // Hazardous (Red)
+    if (score <= 5.0) return 0x0284c7; // Sky (WHO Target)
+    if (score <= 10.0) return 0x10b981; // Green (Exceeds 1-2x)
+    if (score <= 15.0) return 0xeab308; // Yellow (Exceeds 2-3x)
+    if (score <= 25.0) return 0xf97316; // Orange (Exceeds 3-5x)
+    if (score <= 35.0) return 0xef4444; // Red (Exceeds 5-7x)
+    if (score <= 50.0) return 0x8b5cf6; // Purple (Exceeds 7-10x)
+    return 0x991b1b; // Dark Red (Exceeds >10x)
   };
 
   const getAQILabel = (score: number) => {
-    if (score <= 25) return 'ดีมาก (Very Good)';
-    if (score <= 50) return 'ดี (Good)';
-    if (score <= 100) return 'ปานกลาง (Moderate)';
-    if (score <= 200) return 'เริ่มมีผลต่อสุขภาพ';
-    return 'มีผลต่อสุขภาพรุนแรง';
+    if (score <= 5.0) return 'AQI 0-5';
+    if (score <= 10.0) return 'AQI 5-10';
+    if (score <= 15.0) return 'AQI 10-15';
+    if (score <= 25.0) return 'AQI 15-25';
+    if (score <= 35.0) return 'AQI 25-35';
+    if (score <= 50.0) return 'AQI 35-50';
+    return 'AQI >50';
   };
 
   // 1. Fetch Custom layout rooms on mount
@@ -719,29 +723,37 @@ export default function SchoolMap() {
         <div ref={containerRef} className="w-full h-full" />
 
         {/* Legend Overlay (Cyber panel style on bottom left) */}
-        <div className="absolute bottom-4 left-4 bg-white/80 backdrop-blur-md border border-black/[0.04] p-3.5 rounded-xl shadow-xs text-[10px] font-medium text-text-secondary space-y-2 pointer-events-none max-w-[200px] z-10">
+        <div className="absolute bottom-4 left-4 bg-white/80 backdrop-blur-md border border-black/[0.04] p-3.5 rounded-xl shadow-xs text-[10px] font-medium text-text-secondary space-y-1.5 pointer-events-none max-w-[200px] z-10">
           <div className="font-bold text-text-primary uppercase tracking-wide border-b border-black/[0.04] pb-1.5 mb-1.5">
             สัญลักษณ์คุณภาพอากาศ (AQI)
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#0284c7] shadow-[0_0_6px_rgba(2,132,199,0.5)]" />
-            <span>ดีมาก 0 - 25 µg/m³ (ช้า/จาง)</span>
+            <span>AQI 0 - 5 (WHO Target)</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
-            <span>ดี 26 - 50 µg/m³</span>
+            <span>AQI 5 - 10</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#eab308] shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
-            <span>ปานกลาง 51 - 100 µg/m³</span>
+            <span>AQI 10 - 15</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#f97316] shadow-[0_0_6px_rgba(249,115,22,0.5)]" />
-            <span>มีผลต่อสุขภาพ 101 - 200 µg/m³</span>
+            <span>AQI 15 - 25</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#ef4444] shadow-[0_0_6px_rgba(239,68,68,0.5)]" />
-            <span>อันตรายสูง 200+ µg/m³ (เร็ว/ใหญ่)</span>
+            <span>AQI 25 - 35</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#8b5cf6] shadow-[0_0_6px_rgba(139,92,246,0.5)]" />
+            <span>AQI 35 - 50</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#991b1b] shadow-[0_0_6px_rgba(153,27,27,0.5)]" />
+            <span>AQI &gt;50 (อันตรายสูง)</span>
           </div>
         </div>
 
