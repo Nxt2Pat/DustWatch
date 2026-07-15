@@ -237,7 +237,7 @@ export default function StationDetail() {
         <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <MetricTile
             label="Temperature"
-            value={reading.env.temperature ?? '--'}
+            value={reading.env.temperature !== undefined && reading.env.temperature !== null ? reading.env.temperature.toFixed(5) : '--'}
             unit="°C"
             status={reading.env.temperature && reading.env.temperature > 30 ? 'Warm' : 'Cool'}
             statusColor={reading.env.temperature && reading.env.temperature > 30 ? 'text-yellow-400' : 'text-green-400'}
@@ -245,7 +245,7 @@ export default function StationDetail() {
           />
           <MetricTile
             label="Humidity"
-            value={reading.env.humidity ?? '--'}
+            value={reading.env.humidity !== undefined && reading.env.humidity !== null ? reading.env.humidity.toFixed(5) : '--'}
             unit="%"
             status={reading.env.humidity && reading.env.humidity > 70 ? 'Humid' : 'Dry'}
             statusColor="text-blue-400"
@@ -253,14 +253,14 @@ export default function StationDetail() {
           />
           <MetricTile
             label="IAQ Index"
-            value={reading.env.iaq ?? '--'}
+            value={reading.env.iaq !== undefined && reading.env.iaq !== null ? reading.env.iaq.toFixed(5) : '--'}
             status={iaqStat.label}
             statusColor={iaqStat.color}
             icon="🍃"
           />
           <MetricTile
             label="Sound Avg"
-            value={reading.sound.db_avg ?? '--'}
+            value={reading.sound.db_avg !== undefined && reading.sound.db_avg !== null ? reading.sound.db_avg.toFixed(5) : '--'}
             unit="dB"
             status={reading.sound.db_avg && reading.sound.db_avg > 70 ? 'Noisy' : 'Quiet'}
             statusColor={reading.sound.db_avg && reading.sound.db_avg > 70 ? 'text-orange-400' : 'text-green-400'}

@@ -10,9 +10,8 @@ export default function AQIGaugeCard({ score, level }: AQIGaugeCardProps) {
   const colors = getAQIColors(level);
   
   // Circle coordinates & stroke settings for SVG
-  const radius = 50;
   const strokeWidth = 8;
-  const normalizedRadius = radius - strokeWidth * 2;
+  const normalizedRadius = 40; // Radius to fit nicely within 128px
   const circumference = normalizedRadius * 2 * Math.PI;
   
   // Cap gauge fill at 300 score
@@ -32,8 +31,8 @@ export default function AQIGaugeCard({ score, level }: AQIGaugeCardProps) {
             fill="transparent"
             strokeWidth={strokeWidth}
             r={normalizedRadius}
-            cx={radius + strokeWidth}
-            cy={radius + strokeWidth}
+            cx={64}
+            cy={64}
           />
           {/* Active Colored Arc */}
           <circle
@@ -51,8 +50,8 @@ export default function AQIGaugeCard({ score, level }: AQIGaugeCardProps) {
             style={{ strokeDashoffset }}
             strokeLinecap="round"
             r={normalizedRadius}
-            cx={radius + strokeWidth}
-            cy={radius + strokeWidth}
+            cx={64}
+            cy={64}
           />
         </svg>
 

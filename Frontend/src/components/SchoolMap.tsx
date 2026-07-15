@@ -83,25 +83,23 @@ export default function SchoolMap() {
     })
     .map(([id, data]) => ({ id, data, meta: nodesMeta[id] }));
 
-  // Color mapping based on AQI (WHO Guidelines)
+  // Color mapping based on AQI (US EPA Guidelines)
   const getAQIColorHex = (score: number) => {
-    if (score <= 5.0) return 0x0284c7; // Sky (WHO Target)
-    if (score <= 10.0) return 0x10b981; // Green (Exceeds 1-2x)
-    if (score <= 15.0) return 0xeab308; // Yellow (Exceeds 2-3x)
-    if (score <= 25.0) return 0xf97316; // Orange (Exceeds 3-5x)
-    if (score <= 35.0) return 0xef4444; // Red (Exceeds 5-7x)
-    if (score <= 50.0) return 0x8b5cf6; // Purple (Exceeds 7-10x)
-    return 0x991b1b; // Dark Red (Exceeds >10x)
+    if (score <= 50.0) return 0x10b981; // Green (Good)
+    if (score <= 100.0) return 0xeab308; // Yellow (Moderate)
+    if (score <= 150.0) return 0xf97316; // Orange (Sensitive)
+    if (score <= 200.0) return 0xef4444; // Red (Unhealthy)
+    if (score <= 300.0) return 0x8b5cf6; // Purple (Very Unhealthy)
+    return 0x991b1b; // Dark Red (Hazardous)
   };
 
   const getAQILabel = (score: number) => {
-    if (score <= 5.0) return 'AQI 0-5';
-    if (score <= 10.0) return 'AQI 5-10';
-    if (score <= 15.0) return 'AQI 10-15';
-    if (score <= 25.0) return 'AQI 15-25';
-    if (score <= 35.0) return 'AQI 25-35';
-    if (score <= 50.0) return 'AQI 35-50';
-    return 'AQI >50';
+    if (score <= 50.0) return 'AQI 0-50 (ดี)';
+    if (score <= 100.0) return 'AQI 51-100 (ปานกลาง)';
+    if (score <= 150.0) return 'AQI 101-150 (กลุ่มเสี่ยง)';
+    if (score <= 200.0) return 'AQI 151-200 (เริ่มมีผลต่อสุขภาพ)';
+    if (score <= 300.0) return 'AQI 201-300 (มีผลต่อสุขภาพมาก)';
+    return 'AQI >300 (อันตราย)';
   };
 
   // 1. Fetch Custom layout rooms on mount
@@ -728,34 +726,31 @@ export default function SchoolMap() {
             สัญลักษณ์คุณภาพอากาศ (AQI)
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#0284c7] shadow-[0_0_6px_rgba(2,132,199,0.5)]" />
-            <span>AQI 0 - 5 (WHO Target)</span>
-          </div>
-          <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
-            <span>AQI 5 - 10</span>
+            <span>AQI 0 - 50 (ดี)</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#eab308] shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
-            <span>AQI 10 - 15</span>
+            <span>AQI 51 - 100 (ปานกลาง)</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#f97316] shadow-[0_0_6px_rgba(249,115,22,0.5)]" />
-            <span>AQI 15 - 25</span>
+            <span>AQI 101 - 150 (กลุ่มเสี่ยง)</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#ef4444] shadow-[0_0_6px_rgba(239,68,68,0.5)]" />
-            <span>AQI 25 - 35</span>
+            <span>AQI 151 - 200 (มีผลต่อสุขภาพ)</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#8b5cf6] shadow-[0_0_6px_rgba(139,92,246,0.5)]" />
-            <span>AQI 35 - 50</span>
+            <span>AQI 201 - 300 (มีผลต่อสุขภาพมาก)</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#991b1b] shadow-[0_0_6px_rgba(153,27,27,0.5)]" />
-            <span>AQI &gt;50 (อันตรายสูง)</span>
+            <span>AQI &gt;300 (อันตราย)</span>
           </div>
         </div>
+
 
         {/* Instruction overlay - fades out after mouse interactions */}
         <div className="absolute top-4 left-4 bg-black/50 text-white/90 px-3 py-1.5 rounded-lg text-[9px] font-bold tracking-wider pointer-events-none uppercase font-mono z-10 flex items-center gap-1.5 shadow-sm">
@@ -820,11 +815,15 @@ export default function SchoolMap() {
                     <div className="grid grid-cols-2 gap-2 border-t border-black/[0.03] pt-2 mt-1.5 text-[9px]">
                       <div>
                         <span className="block text-text-secondary">อุณหภูมิ:</span>
-                        <span className="font-bold font-mono text-text-primary">{hoveredRoom.temp}°C</span>
+                        <span className="font-bold font-mono text-text-primary">
+                          {hoveredRoom.temp !== null && hoveredRoom.temp !== undefined ? `${hoveredRoom.temp.toFixed(2)}` : '--'}°C
+                        </span>
                       </div>
                       <div>
                         <span className="block text-text-secondary">ความชื้น:</span>
-                        <span className="font-bold font-mono text-text-primary">{hoveredRoom.humid}%</span>
+                        <span className="font-bold font-mono text-text-primary">
+                          {hoveredRoom.humid !== null && hoveredRoom.humid !== undefined ? `${hoveredRoom.humid.toFixed(2)}` : '--'}%
+                        </span>
                       </div>
                     </div>
                   </>

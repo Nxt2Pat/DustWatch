@@ -331,18 +331,24 @@ export default function Dashboard() {
               </div>
 
               {/* Sub-Metrics grid */}
-              <div className="grid grid-cols-4 gap-3 p-3 rounded-2xl border border-white/5 bg-white/[0.02] mt-4">
+              <div className="grid grid-cols-3 gap-3 p-3 rounded-2xl border border-white/5 bg-white/[0.02] mt-4">
                 <div className="text-center">
                   <span className="block text-[10px] uppercase font-bold tracking-wider text-gray-500">Temp</span>
-                  <span className="font-mono text-sm text-gray-200">{reading.env.temperature ?? '--'}°C</span>
+                  <span className="font-mono text-sm text-gray-200">
+                    {reading.env.temperature !== undefined && reading.env.temperature !== null ? `${reading.env.temperature.toFixed(2)}` : '--'}°C
+                  </span>
                 </div>
                 <div className="text-center border-l border-white/5">
                   <span className="block text-[10px] uppercase font-bold tracking-wider text-gray-500">Humidity</span>
-                  <span className="font-mono text-sm text-gray-200">{reading.env.humidity ?? '--'}%</span>
+                  <span className="font-mono text-sm text-gray-200">
+                    {reading.env.humidity !== undefined && reading.env.humidity !== null ? `${reading.env.humidity.toFixed(2)}` : '--'}%
+                  </span>
                 </div>
                 <div className="text-center border-l border-white/5">
                   <span className="block text-[10px] uppercase font-bold tracking-wider text-gray-500">IAQ Index</span>
-                  <span className="font-mono text-sm text-gray-200">{reading.env.iaq ?? '--'}</span>
+                  <span className="font-mono text-sm text-gray-200">
+                    {reading.env.iaq !== undefined && reading.env.iaq !== null ? `${reading.env.iaq.toFixed(2)}` : '--'}
+                  </span>
                 </div>
               </div>
 

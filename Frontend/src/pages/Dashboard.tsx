@@ -33,53 +33,45 @@ export default function Dashboard() {
 
   // Colors & Glow mappings matching the Air Quality Index standards
   const getAQIStyles = (aqi: number) => {
-    if (aqi <= 5.0) return { 
-      text: 'text-[#0284c7]', 
-      border: 'border-[#0284c7]/20', 
-      bg: 'bg-[#0284c7]/5', 
-      glow: 'shadow-[0_4px_20px_-2px_rgba(2,132,199,0.12)] hover:border-[#0284c7]/40',
-      dot: 'bg-[#0284c7]',
-      label: 'สอดคล้องเกณฑ์ WHO (0-5)' 
-    };
-    if (aqi <= 10.0) return { 
+    if (aqi <= 50.0) return { 
       text: 'text-[#10b981]', 
       border: 'border-[#10b981]/20', 
       bg: 'bg-[#10b981]/5', 
       glow: 'shadow-[0_4px_20px_-2px_rgba(16,185,129,0.12)] hover:border-[#10b981]/40',
       dot: 'bg-[#10b981]',
-      label: 'เกินเกณฑ์ WHO 1-2 เท่า (5-10)' 
+      label: 'ดี (Good)' 
     };
-    if (aqi <= 15.0) return { 
+    if (aqi <= 100.0) return { 
       text: 'text-[#eab308]', 
       border: 'border-[#eab308]/20', 
       bg: 'bg-[#eab308]/5', 
       glow: 'shadow-[0_4px_20px_-2px_rgba(234,179,8,0.12)] hover:border-[#eab308]/40',
       dot: 'bg-[#eab308]',
-      label: 'เกินเกณฑ์ WHO 2-3 เท่า (10-15)' 
+      label: 'ปานกลาง (Moderate)' 
     };
-    if (aqi <= 25.0) return { 
+    if (aqi <= 150.0) return { 
       text: 'text-[#f97316]', 
       border: 'border-[#f97316]/20', 
       bg: 'bg-[#f97316]/5', 
       glow: 'shadow-[0_4px_20px_-2px_rgba(249,115,22,0.12)] hover:border-[#f97316]/40',
       dot: 'bg-[#f97316]',
-      label: 'เกินเกณฑ์ WHO 3-5 เท่า (15-25)' 
+      label: 'เริ่มมีผลกระทบต่อกลุ่มเสี่ยง' 
     };
-    if (aqi <= 35.0) return { 
+    if (aqi <= 200.0) return { 
       text: 'text-[#ef4444]', 
       border: 'border-[#ef4444]/20', 
       bg: 'bg-[#ef4444]/5', 
       glow: 'shadow-[0_4px_20px_-2px_rgba(239,68,68,0.12)] hover:border-[#ef4444]/40',
       dot: 'bg-[#ef4444]',
-      label: 'เกินเกณฑ์ WHO 5-7 เท่า (25-35)' 
+      label: 'เริ่มมีผลต่อสุขภาพ (Unhealthy)' 
     };
-    if (aqi <= 50.0) return { 
+    if (aqi <= 300.0) return { 
       text: 'text-[#8b5cf6]', 
       border: 'border-[#8b5cf6]/20', 
       bg: 'bg-[#8b5cf6]/5', 
       glow: 'shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] hover:border-[#8b5cf6]/40',
       dot: 'bg-[#8b5cf6]',
-      label: 'เกินเกณฑ์ WHO 7-10 เท่า (35-50)' 
+      label: 'มีผลต่อสุขภาพมาก (Very Unhealthy)' 
     };
     return { 
       text: 'text-[#991b1b]', 
@@ -87,7 +79,7 @@ export default function Dashboard() {
       bg: 'bg-[#991b1b]/5', 
       glow: 'shadow-[0_4px_20px_-2px_rgba(153,27,27,0.12)] hover:border-[#991b1b]/40',
       dot: 'bg-[#991b1b]',
-      label: 'เกินเกณฑ์ WHO >10 เท่า (>50)' 
+      label: 'อันตรายร้ายแรง (Hazardous)' 
     };
   };
 
@@ -247,7 +239,7 @@ export default function Dashboard() {
                       อุณหภูมิห้อง
                     </span>
                     <span className="font-semibold text-text-primary font-mono">
-                      {online ? `${node.reading.env.temperature.toFixed(1)}°C` : '--'}
+                      {online && node.reading.env.temperature !== undefined && node.reading.env.temperature !== null ? `${node.reading.env.temperature.toFixed(2)}°C` : '--'}
                     </span>
                   </div>
 
@@ -258,7 +250,7 @@ export default function Dashboard() {
                       ความชื้นห้อง
                     </span>
                     <span className="font-semibold text-text-primary font-mono">
-                      {online ? `${node.reading.env.humidity.toFixed(0)}%` : '--'}
+                      {online && node.reading.env.humidity !== undefined && node.reading.env.humidity !== null ? `${node.reading.env.humidity.toFixed(2)}%` : '--'}
                     </span>
                   </div>
 
@@ -269,7 +261,7 @@ export default function Dashboard() {
                       ระดับมลพิษ IAQ
                     </span>
                     <span className="font-semibold text-text-primary font-mono">
-                      {online && node.reading.env.iaq ? `${node.reading.env.iaq.toFixed(0)}` : '--'}
+                      {online && node.reading.env.iaq !== undefined && node.reading.env.iaq !== null ? `${node.reading.env.iaq.toFixed(2)}` : '--'}
                     </span>
                   </div>
                 </div>
