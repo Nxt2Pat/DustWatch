@@ -231,6 +231,89 @@ export default function Dashboard() {
         </button>
       </div>
 
+      {/* ─── Device Toggle Checklist ─── */}
+      <div className="p-5 rounded-3xl border border-white/5 bg-gradient-to-r from-blue-950/20 to-indigo-950/20 backdrop-blur-md space-y-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-2">
+          <div>
+            <h3 className="text-xs font-bold text-gray-200 uppercase tracking-wider font-mono flex items-center gap-2">
+              🔌 รายชื่อเครื่องวัดฝุ่นทั้งหมด (DustWatch Stations Configuration)
+            </h3>
+            <p className="text-[10px] text-gray-400 mt-0.5">
+              ติ๊กเพื่อเลือกเปิดใช้งานเครื่องวัดฝุ่นที่ต้องการแสดงผลในระบบ (และซ่อนเครื่องที่ไม่ต้องการแสดง)
+            </p>
+          </div>
+          <span className="text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 border border-blue-500/25 px-2.5 py-1 rounded-full shrink-0 self-start sm:self-auto">
+            {allNodeIds.filter(id => !nodesMeta[id] || nodesMeta[id].active !== 0).length} / {allNodeIds.length} Active Stations
+          </span>
+        </div>
+        
+        <div className="flex flex-wrap gap-2.5">
+          {allNodeIds.map((id) => {
+            const meta = nodesMeta[id];
+            const isActive = !meta || meta.active !== 0;
+            const displayName = meta?.display_name || latest[id]?.reading.location || id;
+            return (
+              <label
+                key={id}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-2xl border text-xs font-mono transition-all duration-200 cursor-pointer select-none hover:scale-[1.02] ${
+                  isActive
+                    ? 'bg-blue-500/10 border-blue-500/30 text-blue-300 shadow-md shadow-blue-500/5 hover:border-blue-400/50'
+                    : 'bg-white/[0.01] border-white/5 text-gray-500 hover:border-white/15'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={async (e) => {
+                    const nextActive = e.target.checked ? 1 : 0;
+                    
+                    // Optimistic update of nodesMeta in store to keep UI responsive
+                    const updatedMeta = { ...nodesMeta };
+                    const currentMeta = updatedMeta[id] || {
+                      id,
+                      display_name: displayName,
+                      location: latest[id]?.reading.location || 'Offline Station',
+                      active: 1,
+                      created_at: new Date().toISOString(),
+                    };
+                    updatedMeta[id] = { ...currentMeta, active: nextActive };
+                    setNodesMeta(updatedMeta);
+
+                    // Call API to persist
+                    try {
+                      const payload = {
+                        active: nextActive,
+                        tag: currentMeta.tag ?? '',
+                        display_name: currentMeta.display_name || displayName,
+                        status: currentMeta.status ?? 'unconfirmed',
+                        confirmed: currentMeta.confirmed ?? 0,
+                        pos_x: currentMeta.pos_x ?? 0.0,
+                        pos_y: currentMeta.pos_y ?? 0.0,
+                        floor: currentMeta.floor ?? 1,
+                      };
+                      await fetch(`${API_BASE}/api/v1/nodes/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                      });
+                    } catch (err) {
+                      console.error(`Failed to toggle node active state for ${id}`, err);
+                      // Rollback on error
+                      const rollbackMeta = { ...nodesMeta };
+                      rollbackMeta[id] = { ...currentMeta, active: isActive ? 1 : 0 };
+                      setNodesMeta(rollbackMeta);
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-white/20 bg-[#0d101a] text-blue-500 cursor-pointer focus:ring-0 focus:ring-offset-0 transition-colors"
+                />
+                <span className="font-bold">{displayName}</span>
+                <span className="text-[9px] opacity-60">({id})</span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
       {/* ─── Station Cards Grid ─── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {visibleNodeEntries.map(([nodeId, nodeData]) => {
@@ -389,22 +472,58 @@ export default function Dashboard() {
               {/* Left Column: Form & Node Selector (col-span-5) */}
               <div className="lg:col-span-5 space-y-4 overflow-y-auto pr-1 no-scrollbar flex flex-col">
                 
-                {/* Node Selector */}
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1.5 font-mono">
-                    เลือกโหนดเพื่อแก้ไข (Select Node)
+                {/* Node Selector Checklist */}
+                <div className="flex flex-col space-y-1.5">
+                  <label className="block text-[10px] uppercase font-bold text-gray-500 font-mono">
+                    เลือกเครื่องวัดฝุ่นที่ต้องการแสดงผลและแก้ไข (Select & Toggle Stations)
                   </label>
-                  <select
-                    value={selectedNodeIdForEdit || ''}
-                    onChange={(e) => setSelectedNodeIdForEdit(e.target.value || null)}
-                    className="w-full px-3 py-2 rounded-xl border border-white/10 bg-[#0d101a] text-xs text-white focus:outline-none cursor-pointer font-mono"
-                  >
-                    {Object.keys(tempConfigs).map((id) => (
-                      <option key={id} value={id}>
-                        {id} {tempConfigs[id].display_name ? `(${tempConfigs[id].display_name})` : ''} {tempConfigs[id].active === 0 ? ' [Disabled]' : ''}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="border border-white/10 rounded-2xl bg-[#0d101a] max-h-[200px] overflow-y-auto p-1.5 space-y-1">
+                    {Object.keys(tempConfigs).map((id) => {
+                      const conf = tempConfigs[id];
+                      const isSelected = selectedNodeIdForEdit === id;
+                      return (
+                        <div
+                          key={id}
+                          onClick={() => setSelectedNodeIdForEdit(id)}
+                          className={`flex items-center justify-between p-2 rounded-xl transition-all cursor-pointer ${
+                            isSelected 
+                              ? 'bg-blue-500/10 border border-blue-500/20' 
+                              : 'hover:bg-white/[0.02] border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <input
+                              type="checkbox"
+                              checked={conf.active === 1}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                setTempConfigs({
+                                  ...tempConfigs,
+                                  [id]: { ...conf, active: e.target.checked ? 1 : 0 }
+                                });
+                              }}
+                              className="h-4 w-4 rounded border-white/10 bg-transparent text-blue-500 cursor-pointer"
+                            />
+                            <div className="text-left font-mono">
+                              <span className="text-xs font-bold text-gray-200">
+                                {conf.display_name || id}
+                              </span>
+                              <span className="block text-[9px] text-gray-500">
+                                ID: {id} {conf.tag ? `• ${conf.tag}` : ''}
+                              </span>
+                            </div>
+                          </div>
+                          <span className={`text-[8px] font-bold font-mono px-2 py-0.5 rounded-full ${
+                            conf.active === 1 
+                              ? 'text-green-400 bg-green-500/10 border border-green-500/20' 
+                              : 'text-gray-500 bg-gray-500/10 border border-gray-500/20'
+                          }`}>
+                            {conf.active === 1 ? 'ACTIVE' : 'INACTIVE'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {selectedNodeIdForEdit && tempConfigs[selectedNodeIdForEdit] && (() => {
