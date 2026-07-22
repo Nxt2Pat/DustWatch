@@ -181,23 +181,15 @@ export default function History() {
               const res = await api.get<HistoryPoint[]>(`/api/v1/readings/${nodeId}/history?start=${timeRange}&interval=${interval}`);
               return { nodeId, data: res };
             } catch (err) {
-              console.warn(`Query failed for node ${nodeId}, generating simulated curve`, err);
-              // Fallback to mock data
-              const mockData = generateSimulatedHistory(timeRange, nodeId, selectedMetric);
-              return { nodeId, data: mockData };
+              console.warn(`Query failed for node ${nodeId}`, err);
+              return { nodeId, data: [] };
             }
           })
         );
 
         if (!active) return;
 
-        // If all endpoints returned empty arrays, fill them with simulated curves for visual verification
-        const validResponses = responses.map((r) => {
-          if (r.data.length < 3) {
-            return { nodeId: r.nodeId, data: generateSimulatedHistory(timeRange, r.nodeId, selectedMetric) };
-          }
-          return r;
-        });
+        const validResponses = responses;
 
         // ─── Merge algorithm ───
         // 1. Gather all unique timestamps sorted chronologically
@@ -233,38 +225,6 @@ export default function History() {
       active = false;
     };
   }, [selectedNodes, selectedMetric, timeRange]);
-
-  // Fallback simulator to make page visually interactive even if InfluxDB is offline
-  const generateSimulatedHistory = (range: TimeRange, nodeId: string, metric: string): HistoryPoint[] => {
-    const points: HistoryPoint[] = [];
-    let count = 12;
-    let stepMinutes = 5;
-
-    if (range === '-1h') { count = 60; stepMinutes = 1; }
-    else if (range === '-6h') { count = 72; stepMinutes = 5; }
-    else if (range === '-24h') { count = 96; stepMinutes = 15; }
-    else if (range === '-7d') { count = 168; stepMinutes = 60; }
-    else if (range === '-30d') { count = 120; stepMinutes = 360; }
-
-    const now = new Date();
-    
-    // Seed bases by nodeId so curves look distinct
-    const hash = nodeId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const baseVal = (hash % 50) + 15; // distinct value offset
-
-    for (let i = count; i >= 0; i--) {
-      const time = new Date(now.getTime() - i * stepMinutes * 60 * 1000);
-      const rand = (Math.random() - 0.5) * 0.12; // +-6% drift
-      const wave = Math.sin(i / 6 + (hash % 10)) * (baseVal * 0.25);
-
-      points.push({
-        timestamp: time.toISOString(),
-        [metric]: Math.max(0, baseVal + wave + baseVal * rand),
-      });
-    }
-
-    return points;
-  };
 
   // Export merged data matrix to CSV
   const handleExportCSV = () => {
@@ -373,6 +333,10 @@ export default function History() {
       ) : isLoading ? (
         <div className="p-10 glass-card">
           <LoadingSkeleton lines={6} />
+        </div>
+      ) : mergedData.length === 0 ? (
+        <div className="p-16 glass-card text-center text-xs text-gray-500 font-mono">
+          ไม่พบข้อมูลประวัติย้อนหลังในระบบสำหรับสถานีและช่วงเวลาที่เลือก (InfluxDB มีข้อมูลน้อยกว่า 3 จุด หรือเซิร์ฟเวอร์ออฟไลน์)
         </div>
       ) : (
         <TimeSeriesChart

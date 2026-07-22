@@ -4,8 +4,6 @@ import type { WSMessage } from '../types/sensor';
 
 import { getWsUrl } from '../api/sourceConfig';
 
-const WS_URL = getWsUrl();
-
 export function useWebSocket() {
   const [isConnected, setIsConnected] = useState(false);
   const pushMessage = useStore((state) => state.pushMessage);
@@ -50,8 +48,9 @@ export function useWebSocket() {
     }
 
     try {
-      console.log(`กำลังเชื่อมต่อ WebSocket: ${WS_URL}`);
-      const ws = new WebSocket(WS_URL);
+      const currentWsUrl = getWsUrl();
+      console.log(`กำลังเชื่อมต่อ WebSocket: ${currentWsUrl}`);
+      const ws = new WebSocket(currentWsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {

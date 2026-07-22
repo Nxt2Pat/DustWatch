@@ -80,7 +80,6 @@ export default function DevPortal() {
   const [editTemp, setEditTemp] = useState<string>('');
   const [editHumid, setEditHumid] = useState<string>('');
   const [editIAQ, setEditIAQ] = useState<string>('');
-  const [editCO2, setEditCO2] = useState<string>('');
 
   useEffect(() => {
     if (activeNodeIds.length > 0 && !dataManageNodeId) {
@@ -317,7 +316,6 @@ export default function DevPortal() {
     setEditTemp(point.temperature !== undefined ? String(point.temperature) : '');
     setEditHumid(point.humidity !== undefined ? String(point.humidity) : '');
     setEditIAQ(point.iaq !== undefined ? String(point.iaq) : '');
-    setEditCO2(point.co2_eq !== undefined ? String(point.co2_eq) : '');
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
@@ -337,7 +335,6 @@ export default function DevPortal() {
           temperature: editTemp !== '' ? parseFloat(editTemp) : null,
           humidity: editHumid !== '' ? parseFloat(editHumid) : null,
           iaq: editIAQ !== '' ? parseFloat(editIAQ) : null,
-          co2_eq: editCO2 !== '' ? parseFloat(editCO2) : null
         })
       });
       const json = await res.json();
@@ -1118,7 +1115,6 @@ export default function DevPortal() {
                       <th className="p-4">Temp</th>
                       <th className="p-4">Humid</th>
                       <th className="p-4">IAQ</th>
-                      <th className="p-4">CO₂eq</th>
                       <th className="p-4">DCS</th>
                       <th className="p-4 text-right">Actions</th>
                     </tr>
@@ -1134,7 +1130,6 @@ export default function DevPortal() {
                         <td className="p-4">{pt.temperature !== undefined ? `${pt.temperature.toFixed(1)}°C` : '--'}</td>
                         <td className="p-4">{pt.humidity !== undefined ? `${Math.round(pt.humidity)}%` : '--'}</td>
                         <td className="p-4">{pt.iaq ?? '--'}</td>
-                        <td className="p-4">{pt.co2_eq ? `${Math.round(pt.co2_eq)} ppm` : '--'}</td>
                         <td className="p-4 text-blue-400">{pt.dcs ? `${Math.round(pt.dcs * 100)}%` : '--'}</td>
                         <td className="p-4 text-right space-x-2 shrink-0">
                           <button
@@ -1227,15 +1222,6 @@ export default function DevPortal() {
                     type="number" step="1" min="0" max="500"
                     value={editIAQ}
                     onChange={(e) => setEditIAQ(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg border border-white/5 bg-white/5 text-xs text-gray-200 focus:outline-none font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1 font-mono">CO₂eq (ppm)</label>
-                  <input
-                    type="number" step="1" min="300" max="10000"
-                    value={editCO2}
-                    onChange={(e) => setEditCO2(e.target.value)}
                     className="w-full px-3 py-1.5 rounded-lg border border-white/5 bg-white/5 text-xs text-gray-200 focus:outline-none font-mono"
                   />
                 </div>

@@ -14,6 +14,7 @@ import ConnectionStatus from './pages/ConnectionStatus';
 import NSCDetails from './pages/NSCDetails';
 import MapBuilder from './pages/MapBuilder';
 import BottomTabBar from './components/layout/BottomTabBar';
+import DynamicBackground from './components/DynamicBackground';
 
 function AppShell() {
   const { isConnected } = useWebSocket();
@@ -21,6 +22,7 @@ function AppShell() {
   return (
     <div className="min-h-screen text-gray-100 antialiased selection:bg-blue-500/30 flex flex-col relative overflow-x-hidden">
       {/* Background elements */}
+      <DynamicBackground />
       <div className="star-field"></div>
       <div className="nebula-glow-teal"></div>
       <div className="nebula-glow-violet"></div>

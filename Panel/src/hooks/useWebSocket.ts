@@ -4,9 +4,6 @@ import type { NodeMeta } from '../store';
 
 import { getApiBaseUrl, getWsUrl } from '../api/sourceConfig';
 
-const API_HTTP_URL = getApiBaseUrl();
-const API_WS_URL = getWsUrl();
-
 export function useWebSocket() {
   const pushMessage = useStore((state) => state.pushMessage);
   const setInitialNodes = useStore((state) => state.setInitialNodes);
@@ -21,7 +18,8 @@ export function useWebSocket() {
   useEffect(() => {
     const fetchHealth = async () => {
       try {
-        const res = await fetch(`${API_HTTP_URL}/api/v1/health`);
+        const httpUrl = getApiBaseUrl();
+        const res = await fetch(`${httpUrl}/api/v1/health`);
         const json = await res.json();
         if (json.ok && json.data) {
           const services = json.data.services;
@@ -46,13 +44,14 @@ export function useWebSocket() {
   useEffect(() => {
     async function fetchInitialData() {
       try {
-        const readingsRes = await fetch(`${API_HTTP_URL}/api/v1/readings`);
+        const httpUrl = getApiBaseUrl();
+        const readingsRes = await fetch(`${httpUrl}/api/v1/readings`);
         const readingsJson = await readingsRes.json();
         if (readingsJson.ok && readingsJson.data) {
           setInitialNodes(readingsJson.data);
         }
 
-        const nodesRes = await fetch(`${API_HTTP_URL}/api/v1/nodes`);
+        const nodesRes = await fetch(`${httpUrl}/api/v1/nodes`);
         const nodesJson = await nodesRes.json();
         if (nodesJson.ok && nodesJson.data) {
           const metaRecord: Record<string, NodeMeta> = {};
@@ -62,7 +61,7 @@ export function useWebSocket() {
           setNodesMeta(metaRecord);
         }
 
-        const alertsRes = await fetch(`${API_HTTP_URL}/api/v1/alerts?limit=50`);
+        const alertsRes = await fetch(`${httpUrl}/api/v1/alerts?limit=50`);
         const alertsJson = await alertsRes.json();
         if (alertsJson.ok && alertsJson.data) {
           const alertsArray = Array.isArray(alertsJson.data)
@@ -116,8 +115,9 @@ export function useWebSocket() {
         reconnectTimeoutRef.current = null;
       }
 
-      console.log(`Connecting WebSocket to: ${API_WS_URL}`);
-      const socket = new WebSocket(API_WS_URL);
+      const currentWsUrl = getWsUrl();
+      console.log(`Connecting WebSocket to: ${currentWsUrl}`);
+      const socket = new WebSocket(currentWsUrl);
       wsRef.current = socket;
 
       socket.onopen = () => {

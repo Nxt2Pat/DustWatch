@@ -123,12 +123,12 @@ export default function Export() {
   };
 
   return (
-    <div className="space-y-4 relative z-10 pb-12">
+    <div className="space-y-6 relative z-10 max-w-6xl mx-auto pb-12 fade-up">
       {/* Form configuration container */}
-      <form onSubmit={handleExportSubmit} className="premium-card p-5 space-y-4 font-sans">
+      <form onSubmit={handleExportSubmit} className="glass-card p-6 md:p-8 space-y-5 font-sans">
         {/* Node selector multi-select */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 font-sans">
             เลือกห้องเรียนที่ต้องการบันทึกไฟล์ (Selected Rooms)
           </label>
           <div className="flex flex-wrap gap-2">
@@ -141,13 +141,13 @@ export default function Export() {
                   type="button"
                   key={id}
                   onClick={() => toggleNodeSelection(id)}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold border transition-all duration-200 cursor-pointer ${
                     isSelected
-                      ? 'bg-brand-primary text-white border-brand-primary shadow-xs'
-                      : 'bg-[#EDEBF8] text-text-secondary border-transparent hover:bg-white/60 hover:border-brand-primary/20'
+                      ? 'bg-[#0CA4A4] text-white border-[#0CA4A4] shadow-md shadow-[#0CA4A4]/25 font-bold'
+                      : 'bg-white/60 text-gray-700 border-gray-200/80 hover:bg-white hover:border-[#0CA4A4]/40'
                   }`}
                 >
-                  {isSelected && <Check size={12} />}
+                  {isSelected && <Check size={14} />}
                   <span>{displayName}</span>
                 </button>
               );
@@ -156,29 +156,29 @@ export default function Export() {
         </div>
 
         {/* Date picking - OS native picker design */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-text-secondary mb-1.5">
+            <label className="block text-xs font-bold text-gray-600 mb-1.5">
               ตั้งแต่วันที่ (From Date)
             </label>
             <input 
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full bg-black/[0.03] border border-black/5 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-hidden focus:border-[#5E54E3] focus:bg-white"
+              className="w-full bg-white/70 backdrop-blur-md border border-gray-200/80 rounded-full px-4 py-2.5 text-sm font-mono text-gray-900 focus:outline-none focus:border-[#0CA4A4] focus:ring-2 focus:ring-[#0CA4A4]/20 transition-all"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-text-secondary mb-1.5">
+            <label className="block text-xs font-bold text-gray-600 mb-1.5">
               ถึงวันที่ (To Date)
             </label>
             <input 
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full bg-black/[0.03] border border-black/5 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-hidden focus:border-[#5E54E3] focus:bg-white"
+              className="w-full bg-white/70 backdrop-blur-md border border-gray-200/80 rounded-full px-4 py-2.5 text-sm font-mono text-gray-900 focus:outline-none focus:border-[#0CA4A4] focus:ring-2 focus:ring-[#0CA4A4]/20 transition-all"
               required
             />
           </div>
@@ -186,17 +186,17 @@ export default function Export() {
 
         {/* Export format pill toggler */}
         <div>
-          <label className="block text-xs font-bold text-text-secondary mb-2">
+          <label className="block text-xs font-bold text-gray-600 mb-2">
             รูปแบบประเภทไฟล์ (File Format)
           </label>
-          <div className="flex bg-[#EDEBF8] p-1 rounded-xl w-fit">
+          <div className="flex bg-gray-100/80 backdrop-blur-md p-1.5 rounded-full w-fit border border-gray-200/60">
             <button
               type="button"
               onClick={() => setExportFormat('csv')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
                 exportFormat === 'csv'
-                  ? 'bg-white text-brand-primary shadow-xs'
-                  : 'text-text-secondary hover:text-text-primary'
+                  ? 'bg-[#0CA4A4] text-white shadow-md shadow-[#0CA4A4]/25'
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               ตาราง CSV (Excel)
@@ -204,10 +204,10 @@ export default function Export() {
             <button
               type="button"
               onClick={() => setExportFormat('json')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
                 exportFormat === 'json'
-                  ? 'bg-white text-brand-primary shadow-xs'
-                  : 'text-text-secondary hover:text-text-primary'
+                  ? 'bg-[#0CA4A4] text-white shadow-md shadow-[#0CA4A4]/25'
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               ข้อมูลดิบ JSON
@@ -216,7 +216,7 @@ export default function Export() {
         </div>
 
         {errorMsg && (
-          <div className="bg-red-50 text-red-700 border border-red-200 text-xs px-3 py-2 rounded-xl">
+          <div className="bg-rose-500/10 text-rose-700 border border-rose-500/20 text-xs px-4 py-3 rounded-2xl">
             {errorMsg}
           </div>
         )}
@@ -225,7 +225,7 @@ export default function Export() {
         <button
           type="submit"
           disabled={isExporting}
-          className="w-full bg-brand-primary hover:bg-brand-hover disabled:bg-gray-300 text-white font-bold rounded-xl py-3.5 text-sm flex items-center justify-center gap-2 shadow-md shadow-brand-primary/20 transition-all cursor-pointer"
+          className="w-full bg-[#0CA4A4] hover:bg-[#088383] disabled:bg-gray-300 text-white font-bold rounded-full py-3.5 text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#0CA4A4]/25 transition-all cursor-pointer font-sans active:scale-[0.99]"
         >
           {isExporting ? (
             <>
@@ -242,28 +242,28 @@ export default function Export() {
       </form>
 
       {/* Preview Table */}
-      <div className="premium-card p-5">
-        <div className="flex items-center gap-2 mb-3 font-sans">
-          <Table size={18} className="text-brand-primary" />
-          <span className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+      <div className="glass-card p-6">
+        <div className="flex items-center gap-2 mb-4 font-sans">
+          <Table size={18} className="text-[#0CA4A4]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-700">
             ตารางตัวอย่างข้อมูลล่าสุด (Preview - สูงสุด 30 บรรทัด)
           </span>
         </div>
 
         {isPreviewLoading ? (
           <div className="flex justify-center py-10">
-            <Loader2 className="animate-spin text-brand-primary" size={24} />
+            <Loader2 className="animate-spin text-[#0CA4A4]" size={28} />
           </div>
         ) : previewData.length === 0 ? (
-          <div className="text-center py-8 text-xs text-text-muted">
+          <div className="text-center py-8 text-xs text-gray-400">
             ไม่มีประวัติข้อมูลในช่วงเวลานี้
           </div>
         ) : (
-          <div className="relative overflow-x-auto border border-black/5 rounded-2xl max-h-[300px] overflow-y-auto no-scrollbar shadow-xs bg-white">
+          <div className="relative overflow-x-auto border border-gray-200/60 rounded-2xl max-h-[320px] overflow-y-auto no-scrollbar shadow-xs bg-white/60 backdrop-blur-md">
             <table className="w-full text-left text-xs border-collapse">
-              <thead className="bg-[#EDEBF8]/50 text-text-secondary font-sans sticky top-0 z-20 border-b border-black/5">
+              <thead className="bg-gray-100/80 text-gray-600 font-sans sticky top-0 z-20 border-b border-gray-200/60">
                 <tr>
-                  <th className="sticky left-0 bg-white px-4 py-3 z-30 font-bold border-r border-black/5 min-w-[120px]">
+                  <th className="sticky left-0 bg-gray-100 px-4 py-3 z-30 font-bold border-r border-gray-200/60 min-w-[120px]">
                     วัน-เวลาตรวจวัด
                   </th>
                   <th className="px-4 py-3 min-w-[70px]">PM2.5</th>
@@ -273,7 +273,7 @@ export default function Export() {
                   <th className="px-4 py-3 min-w-[70px]">ความชื้น</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/[0.03] text-text-primary">
+              <tbody className="divide-y divide-gray-100 text-gray-900 font-mono">
                 {previewData.map((point, index) => {
                   const localTime = new Date(point.timestamp).toLocaleTimeString('th-TH', {
                     hour: '2-digit',
@@ -285,15 +285,15 @@ export default function Export() {
                   });
 
                   return (
-                    <tr key={index} className="hover:bg-brand-light/30">
-                      <td className="sticky left-0 bg-white px-4 py-2.5 z-10 font-medium border-r border-black/5 text-text-primary">
+                    <tr key={index} className="hover:bg-[#0CA4A4]/5">
+                      <td className="sticky left-0 bg-white px-4 py-2.5 z-10 font-medium border-r border-gray-100 text-gray-900">
                         {localDate} {localTime} น.
                       </td>
-                      <td className="px-4 py-2.5 font-mono font-semibold">{point.pm2_5?.toFixed(1) || '--'}</td>
-                      <td className="px-4 py-2.5 font-mono">{point.pm10?.toFixed(1) || '--'}</td>
-                      <td className="px-4 py-2.5 font-mono">{point.iaq ? Math.round(point.iaq) : '--'}</td>
-                      <td className="px-4 py-2.5 font-mono">{point.temperature?.toFixed(1) || '--'}</td>
-                      <td className="px-4 py-2.5 font-mono">{point.humidity?.toFixed(1) || '--'}</td>
+                      <td className="px-4 py-2.5 font-bold text-[#0CA4A4]">{point.pm2_5?.toFixed(1) || '--'}</td>
+                      <td className="px-4 py-2.5">{point.pm10?.toFixed(1) || '--'}</td>
+                      <td className="px-4 py-2.5">{point.iaq ? Math.round(point.iaq) : '--'}</td>
+                      <td className="px-4 py-2.5">{point.temperature?.toFixed(1) || '--'}</td>
+                      <td className="px-4 py-2.5">{point.humidity?.toFixed(1) || '--'}</td>
                     </tr>
                   );
                 })}
@@ -305,3 +305,4 @@ export default function Export() {
     </div>
   );
 }
+

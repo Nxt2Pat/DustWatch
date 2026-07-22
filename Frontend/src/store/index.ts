@@ -64,8 +64,8 @@ export const useStore = create<StoreState>((set) => ({
             meta: data.meta
           },
           aqi: aqi,
-          status: ((msg as any).status || 'online') as 'online' | 'offline',
-          dcs: (msg as any).dcs
+          status: msg.status || 'deployed',
+          dcs: msg.dcs
         }
       };
 

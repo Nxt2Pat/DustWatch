@@ -17,14 +17,15 @@ const timeRanges = [
   { label: '1 ชม.', value: '1h', start: '-1h', interval: '1m' },
   { label: '6 ชม.', value: '6h', start: '-6h', interval: '5m' },
   { label: '24 ชม.', value: '24h', start: '-24h', interval: '15m' },
+  { label: '3 วัน', value: '3d', start: '-3d', interval: '30m' },
   { label: '7 วัน', value: '7d', start: '-7d', interval: '1h' },
 ];
 
 const metrics = [
-  { label: 'ฝุ่น PM2.5', value: 'pm2_5', color: '#5E54E3', unit: 'µg/m³' },
-  { label: 'ฝุ่น PM10', value: 'pm10', color: '#10B981', unit: 'µg/m³' },
-  { label: 'อุณหภูมิห้อง', value: 'temperature', color: '#EF4444', unit: '°C' },
-  { label: 'ความชื้นสัมพัทธ์', value: 'humidity', color: '#3B82F6', unit: '%' },
+  { label: 'ฝุ่น PM2.5', value: 'pm2_5', color: '#0CA4A4', unit: 'µg/m³', axis: 'left' },
+  { label: 'ฝุ่น PM10', value: 'pm10', color: '#059669', unit: 'µg/m³', axis: 'left' },
+  { label: 'อุณหภูมิห้อง', value: 'temperature', color: '#F59E0B', unit: '°C', axis: 'right' },
+  { label: 'ความชื้นสัมพัทธ์', value: 'humidity', color: '#0284C7', unit: '%', axis: 'right' },
 ];
 
 export default function Analyser() {
@@ -85,6 +86,9 @@ export default function Analyser() {
         } else if (selectedRange.value === '24h') {
           durationMs = 24 * 60 * 60 * 1000;
           stepMs = 15 * 60 * 1000; // 15m
+        } else if (selectedRange.value === '3d') {
+          durationMs = 3 * 24 * 60 * 60 * 1000;
+          stepMs = 30 * 60 * 1000; // 30m
         } else if (selectedRange.value === '7d') {
           durationMs = 7 * 24 * 60 * 60 * 1000;
           stepMs = 60 * 60 * 1000; // 1h
@@ -111,7 +115,6 @@ export default function Analyser() {
         });
 
         // 3. Build merged data points over the timeline
-        // Keep track of the last known value for each node & metric for imputation (ขาด)
         const lastKnownValues: Record<string, number> = {};
 
         const sortedPoints = timeline.map((time) => {
@@ -133,10 +136,6 @@ export default function Analyser() {
           };
 
           selectedNodes.forEach((nodeId) => {
-            const isSimulated = nodeId.toLowerCase().includes('test') || 
-                                nodeId.toLowerCase().includes('sim') || 
-                                nodeId.toLowerCase().includes('sandbox');
-
             const point = nodeDataMaps[nodeId]?.[time];
 
             selectedMetrics.forEach((metric) => {
@@ -145,10 +144,9 @@ export default function Analyser() {
 
               if (point && point[metric] !== undefined && point[metric] !== null) {
                 dataPoint[key] = point[metric];
-                dataPoint[statusKey] = isSimulated ? 'เดา' : 'จริง';
+                dataPoint[statusKey] = 'จริง';
                 lastKnownValues[key] = point[metric];
               } else {
-                // ขาด (Missing) - Use last known value or null if none
                 dataPoint[key] = lastKnownValues[key] !== undefined ? lastKnownValues[key] : null;
                 dataPoint[statusKey] = 'ขาด';
               }
@@ -186,11 +184,62 @@ export default function Analyser() {
     );
   };
 
+  // Compute Summary KPI Stats (Peak, Avg, Min, Trend Delta)
+  const computeKPIs = () => {
+    if (chartData.length === 0 || selectedNodes.length === 0) return null;
+    
+    // Extract all PM2.5 or selected values
+    const pmValues: number[] = [];
+    chartData.forEach((dp) => {
+      selectedNodes.forEach((nodeId) => {
+        const val = dp[`${nodeId}_pm2_5`];
+        if (val != null && !isNaN(val)) {
+          pmValues.push(val);
+        }
+      });
+    });
+
+    if (pmValues.length === 0) return null;
+
+    const max = Math.max(...pmValues);
+    const min = Math.min(...pmValues);
+    const avg = pmValues.reduce((a, b) => a + b, 0) / pmValues.length;
+
+    // Split timeline into first half vs second half for trend
+    const midIdx = Math.floor(chartData.length / 2);
+    const firstHalf: number[] = [];
+    const secondHalf: number[] = [];
+
+    chartData.forEach((dp, idx) => {
+      selectedNodes.forEach((nodeId) => {
+        const val = dp[`${nodeId}_pm2_5`];
+        if (val != null && !isNaN(val)) {
+          if (idx < midIdx) firstHalf.push(val);
+          else secondHalf.push(val);
+        }
+      });
+    });
+
+    const avgFirst = firstHalf.length > 0 ? firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length : avg;
+    const avgSecond = secondHalf.length > 0 ? secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length : avg;
+
+    const deltaPct = avgFirst > 0 ? ((avgSecond - avgFirst) / avgFirst) * 100 : 0;
+
+    return {
+      peak: max.toFixed(1),
+      avg: avg.toFixed(1),
+      min: min.toFixed(1),
+      deltaPct: deltaPct.toFixed(1)
+    };
+  };
+
+  const kpis = computeKPIs();
+
   return (
-    <div className="space-y-4 relative z-10">
+    <div className="space-y-5 relative z-10 max-w-6xl mx-auto pb-12 fade-up">
       {/* Target Room Selection horizontal list */}
-      <div className="premium-card p-5">
-        <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary font-sans mb-3">
+      <div className="glass-card p-6">
+        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 font-sans mb-3">
           เลือกห้องเรียนเพื่อวิเคราะห์แนวโน้ม (Selected Rooms)
         </label>
         <div className="flex flex-wrap gap-2">
@@ -202,13 +251,13 @@ export default function Analyser() {
               <button
                 key={id}
                 onClick={() => toggleNodeSelection(id)}
-                className={`flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold border transition-all duration-200 cursor-pointer ${
                   isSelected
-                    ? 'bg-brand-primary text-white border-brand-primary shadow-xs shadow-brand-primary/20'
-                    : 'bg-[#EDEBF8] text-text-secondary border-transparent hover:bg-white/60 hover:border-brand-primary/20'
+                    ? 'bg-[#0CA4A4] text-white border-[#0CA4A4] shadow-md shadow-[#0CA4A4]/25 font-bold'
+                    : 'bg-white/60 text-gray-700 border-gray-200/80 hover:bg-white hover:border-[#0CA4A4]/40'
                 }`}
               >
-                {isSelected && <Check size={12} />}
+                {isSelected && <Check size={14} />}
                 <span>{displayName}</span>
               </button>
             );
@@ -217,8 +266,8 @@ export default function Analyser() {
       </div>
 
       {/* Metric selection Toggles */}
-      <div className="premium-card p-5">
-        <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary font-sans mb-3">
+      <div className="glass-card p-6">
+        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 font-sans mb-3">
           ประเภทข้อมูล (Parameters)
         </label>
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -229,10 +278,10 @@ export default function Analyser() {
               <button
                 key={m.value}
                 onClick={() => toggleMetricSelection(m.value)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border shrink-0 transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold border shrink-0 transition-all duration-200 cursor-pointer ${
                   isSelected
-                    ? 'bg-brand-light text-brand-primary border-brand-primary/30 shadow-xs'
-                    : 'bg-[#EDEBF8] text-text-secondary border-transparent hover:bg-white/60 hover:border-brand-primary/20'
+                    ? 'bg-[#0CA4A4]/15 text-[#0CA4A4] border-[#0CA4A4]/40 shadow-xs font-bold'
+                    : 'bg-white/60 text-gray-600 border-gray-200/80 hover:bg-white'
                 }`}
               >
                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: m.color }} />
@@ -243,28 +292,75 @@ export default function Analyser() {
         </div>
       </div>
 
+      {/* KPI Summary Stat Bar */}
+      {kpis && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="glass-card p-4 flex flex-col justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 font-sans">
+              🔴 ค่าสูงสุด (Peak PM2.5)
+            </span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-2xl font-black font-mono text-gray-900">{kpis.peak}</span>
+              <span className="text-xs text-gray-400 font-sans">µg/m³</span>
+            </div>
+          </div>
+
+          <div className="glass-card p-4 flex flex-col justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 font-sans">
+              📊 ค่าเฉลี่ยสถิติ (Avg PM2.5)
+            </span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-2xl font-black font-mono text-[#0CA4A4]">{kpis.avg}</span>
+              <span className="text-xs text-gray-400 font-sans">µg/m³</span>
+            </div>
+          </div>
+
+          <div className="glass-card p-4 flex flex-col justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 font-sans">
+              🟢 ค่าต่ำสุด (Min PM2.5)
+            </span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-2xl font-black font-mono text-emerald-600">{kpis.min}</span>
+              <span className="text-xs text-gray-400 font-sans">µg/m³</span>
+            </div>
+          </div>
+
+          <div className="glass-card p-4 flex flex-col justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 font-sans">
+              📈 แนวโน้มการเปลี่ยน (Trend)
+            </span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className={`text-2xl font-black font-mono ${Number(kpis.deltaPct) > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                {Number(kpis.deltaPct) > 0 ? `+${kpis.deltaPct}%` : `${kpis.deltaPct}%`}
+              </span>
+              <span className="text-[10px] text-gray-400 font-sans">เทียบครึ่งช่วงเวลา</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Chart range selector */}
-      <div className="premium-card p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+      <div className="glass-card p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
           <div className="flex items-center gap-2">
-            <BarChart2 className="text-brand-primary" size={18} />
-            <span className="text-xs font-bold uppercase tracking-wider text-text-secondary font-sans">
+            <BarChart2 className="text-[#0CA4A4]" size={18} />
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-700 font-sans">
               แนวโน้มข้อมูลสภาพแวดล้อม (Environmental Trend Chart)
             </span>
           </div>
 
           {/* Segmented Range Control */}
-          <div className="flex bg-[#EDEBF8] p-1 rounded-xl">
+          <div className="flex bg-gray-100/80 backdrop-blur-md p-1.5 rounded-full border border-gray-200/60">
             {timeRanges.map((range) => {
               const isSelected = selectedRange.value === range.value;
               return (
                 <button
                   key={range.value}
                   onClick={() => setSelectedRange(range)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
                     isSelected
-                      ? 'bg-white text-brand-primary shadow-xs'
-                      : 'text-text-secondary hover:text-text-primary'
+                      ? 'bg-[#0CA4A4] text-white shadow-md shadow-[#0CA4A4]/25 font-bold'
+                      : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   {range.label}
@@ -283,9 +379,9 @@ export default function Analyser() {
             const statusKey = `${dataKey}_status`;
             const statusVal = payload[statusKey] || 'จริง';
 
-            let dotColor = '#3B82F6'; // ฟ้าจริง
-            if (statusVal === 'เดา') dotColor = '#10B981'; // เขียวเดา
-            if (statusVal === 'ขาด') dotColor = '#EF4444'; // แดงขาด
+            let dotColor = '#3B82F6';
+            if (statusVal === 'เดา') dotColor = '#0CA4A4';
+            if (statusVal === 'ขาด') dotColor = '#EF4444';
 
             return (
               <circle
@@ -307,9 +403,9 @@ export default function Analyser() {
             const statusKey = `${dataKey}_status`;
             const statusVal = payload[statusKey] || 'จริง';
 
-            let dotColor = '#3B82F6'; // ฟ้าจริง
-            if (statusVal === 'เดา') dotColor = '#10B981'; // เขียวเดา
-            if (statusVal === 'ขาด') dotColor = '#EF4444'; // แดงขาด
+            let dotColor = '#3B82F6';
+            if (statusVal === 'เดา') dotColor = '#0CA4A4';
+            if (statusVal === 'ขาด') dotColor = '#EF4444';
 
             return (
               <circle
@@ -329,31 +425,31 @@ export default function Analyser() {
             if (active && payload && payload.length) {
               const dataPoint = payload[0].payload;
               return (
-                <div className="bg-white/95 border border-brand-primary/10 rounded-2xl p-4 shadow-xl text-xs space-y-2">
-                  <div className="font-bold text-text-primary">
+                <div className="bg-white/95 backdrop-blur-md border border-gray-200/80 rounded-2xl p-4 shadow-xl text-xs space-y-2 font-sans">
+                  <div className="font-bold text-gray-900">
                     📅 วันที่: {dataPoint.formattedDate}
                   </div>
-                  <div className="font-semibold text-text-secondary">
+                  <div className="font-semibold text-gray-500 font-mono">
                     ⏰ เวลา: {dataPoint.timestamp} น.
                   </div>
-                  <div className="border-t border-brand-primary/10 my-1 pt-1.5 space-y-1.5">
+                  <div className="border-t border-gray-100 my-1 pt-2 space-y-1.5">
                     {payload.map((p: any) => {
                       const statusKey = `${p.dataKey}_status`;
                       const statusVal = dataPoint[statusKey] || 'จริง';
 
-                      let statusColor = '#3B82F6'; // ฟ้าจริง
-                      if (statusVal === 'เดา') statusColor = '#10B981'; // เขียวเดา
-                      if (statusVal === 'ขาด') statusColor = '#EF4444'; // แดงขาด
+                      let statusColor = '#3B82F6';
+                      if (statusVal === 'เดา') statusColor = '#0CA4A4';
+                      if (statusVal === 'ขาด') statusColor = '#EF4444';
 
                       const metricMeta = metrics.find((m) => p.dataKey.endsWith(m.value));
                       const unitStr = metricMeta?.unit || '';
 
                       return (
                         <div key={p.dataKey} className="flex flex-col gap-0.5">
-                          <span className="font-bold text-brand-primary">
+                          <span className="font-bold text-gray-900 font-mono">
                             {p.name}: {p.value !== null ? `${p.value} ${unitStr}` : 'ไม่มีข้อมูล'}
                           </span>
-                          <span className="text-[10px] font-bold" style={{ color: statusColor }}>
+                          <span className="text-[10px] font-bold font-mono" style={{ color: statusColor }}>
                             ● สถานะ: {statusVal === 'ขาด' ? 'ขาด (ไม่มีข้อมูล)' : statusVal === 'เดา' ? 'เดา (ค่าจำลอง)' : 'จริง'}
                           </span>
                         </div>
@@ -369,16 +465,16 @@ export default function Analyser() {
           return (
             <>
               {/* Status color-coding Legend */}
-              <div className="flex flex-wrap items-center gap-4 text-[10px] font-bold text-text-secondary mb-4 bg-[#F5F4FC] p-2.5 rounded-xl border border-brand-primary/5">
-                <span className="text-text-primary uppercase tracking-wider text-[9px] mr-1">สัญลักษณ์สีจุดกราฟ:</span>
-                <span className="flex items-center gap-1.5 text-[#3B82F6]"><span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6] border border-white" /> ฟ้า = ข้อมูลจริง</span>
-                <span className="flex items-center gap-1.5 text-[#10B981]"><span className="w-2.5 h-2.5 rounded-full bg-[#10B981] border border-white" /> เขียว = เดา (ค่าจำลอง)</span>
-                <span className="flex items-center gap-1.5 text-[#EF4444]"><span className="w-2.5 h-2.5 rounded-full bg-[#EF4444] border border-white" /> แดง = ขาด (ไม่มีข้อมูล)</span>
+              <div className="flex flex-wrap items-center gap-4 text-[10px] font-bold text-gray-600 mb-4 bg-gray-100/70 backdrop-blur-md p-3 rounded-2xl border border-gray-200/50 font-mono">
+                <span className="text-gray-900 uppercase tracking-wider text-[9px] mr-1 font-sans font-bold">สัญลักษณ์สีจุดกราฟ:</span>
+                <span className="flex items-center gap-1.5 text-blue-600"><span className="w-2.5 h-2.5 rounded-full bg-blue-500 border border-white" /> ฟ้า = ข้อมูลจริง</span>
+                <span className="flex items-center gap-1.5 text-[#0CA4A4]"><span className="w-2.5 h-2.5 rounded-full bg-[#0CA4A4] border border-white" /> เขียว = เดา (ค่าจำลอง)</span>
+                <span className="flex items-center gap-1.5 text-rose-500"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 border border-white" /> แดง = ขาด (ไม่มีข้อมูล)</span>
               </div>
 
               {/* Orientation instruction Tip */}
-              <div className="flex items-center gap-2 bg-brand-light border border-brand-primary/10 rounded-xl p-3 text-xs text-text-secondary mb-4 leading-relaxed">
-                <Info size={16} className="text-brand-primary shrink-0" />
+              <div className="flex items-center gap-2.5 bg-[#0CA4A4]/10 border border-[#0CA4A4]/20 rounded-2xl p-3.5 text-xs text-gray-700 mb-5 leading-relaxed font-sans">
+                <Info size={16} className="text-[#0CA4A4] shrink-0" />
                 <span>แนะนำ: หมุนจอโทรศัพท์ของคุณเป็นแนวนอน (Landscape Mode) เพื่อการเปิดดูโครงสร้างลายเส้นกราฟที่ใหญ่และชัดเจนยิ่งขึ้น</span>
               </div>
 
@@ -386,44 +482,56 @@ export default function Analyser() {
               <div className="relative h-[280px] md:h-[400px] w-full flex items-center justify-center">
                 {isLoading ? (
                   <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="animate-spin text-brand-primary" size={32} />
-                    <span className="text-xs text-text-secondary font-mono">กำลังประมวลผลข้อมูลกราฟ...</span>
+                    <Loader2 className="animate-spin text-[#0CA4A4]" size={32} />
+                    <span className="text-xs text-gray-500 font-mono">กำลังประมวลผลข้อมูลกราฟ...</span>
                   </div>
                 ) : errorMsg ? (
-                  <div className="text-xs text-[#DC2626] font-semibold">{errorMsg}</div>
+                  <div className="text-xs text-rose-600 font-semibold">{errorMsg}</div>
                 ) : chartData.length === 0 ? (
-                  <div className="text-xs text-text-muted">กรุณาเลือกห้องเรียนและประเภทข้อมูลด้านบนเพื่อเริ่มแสดงแนวโน้ม</div>
+                  <div className="text-xs text-gray-400">กรุณาเลือกห้องเรียนและประเภทข้อมูลด้านบนเพื่อเริ่มแสดงแนวโน้ม</div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(94, 84, 227, 0.05)" />
+                    <LineChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(226, 232, 240, 0.6)" />
                       <XAxis 
                         dataKey="timestamp" 
-                        tick={{ fontSize: 10, fill: 'var(--color-text-secondary)' }}
-                        stroke="rgba(94, 84, 227, 0.12)"
+                        tick={{ fontSize: 10, fill: '#6B7280', fontFamily: 'JetBrains Mono' }}
+                        stroke="rgba(226, 232, 240, 0.8)"
                       />
                       <YAxis 
-                        tick={{ fontSize: 10, fill: 'var(--color-text-secondary)' }}
-                        stroke="rgba(94, 84, 227, 0.12)"
+                        yAxisId="left"
+                        orientation="left"
+                        tick={{ fontSize: 10, fill: '#0CA4A4', fontFamily: 'JetBrains Mono' }}
+                        stroke="rgba(12, 164, 164, 0.3)"
+                        label={{ value: 'µg/m³', angle: -90, position: 'insideLeft', style: { fontSize: '10px', fill: '#0CA4A4' } }}
+                      />
+                      <YAxis 
+                        yAxisId="right"
+                        orientation="right"
+                        tick={{ fontSize: 10, fill: '#F59E0B', fontFamily: 'JetBrains Mono' }}
+                        stroke="rgba(245, 158, 11, 0.3)"
+                        label={{ value: '°C / %', angle: 90, position: 'insideRight', style: { fontSize: '10px', fill: '#F59E0B' } }}
                       />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: '11px', marginTop: '10px' }} />
+                      <Legend wrapperStyle={{ fontSize: '11px', marginTop: '10px', fontFamily: 'DM Sans' }} />
 
                       {selectedNodes.map((nodeId) => {
                         const displayName = nodesMeta[nodeId]?.display_name || latest[nodeId]?.reading.location || nodeId;
                         
                         return selectedMetrics.map((metricVal) => {
                           const metricMeta = metrics.find((m) => m.value === metricVal);
-                          const lineStroke = metricMeta?.color || '#5E54E3';
+                          const lineStroke = metricMeta?.color || '#0CA4A4';
+                          const yAxisId = metricMeta?.axis || 'left';
 
                           return (
                             <Line
                               key={`${nodeId}_${metricVal}`}
+                              yAxisId={yAxisId}
                               type="monotone"
                               dataKey={`${nodeId}_${metricVal}`}
                               name={`${displayName} - ${metricMeta?.label}`}
                               stroke={lineStroke}
-                              strokeWidth={2}
+                              strokeWidth={2.5}
                               dot={renderCustomDot}
                               activeDot={renderActiveDot}
                               connectNulls
@@ -433,6 +541,7 @@ export default function Analyser() {
                       })}
                     </LineChart>
                   </ResponsiveContainer>
+
                 )}
               </div>
             </>
@@ -442,3 +551,4 @@ export default function Analyser() {
     </div>
   );
 }
+

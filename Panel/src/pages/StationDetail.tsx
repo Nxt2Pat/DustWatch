@@ -27,7 +27,10 @@ interface HistoryPoint {
 
 export default function StationDetail() {
   const { id } = useParams<{ id: string }>();
+  const nodesMeta = useStore((state) => state.nodesMeta);
+  const meta = nodesMeta[id ?? ''];
   const latestNode = useStore((state) => state.latest[id ?? '']);
+  const displayName = meta?.display_name || latestNode?.reading.location || id;
   const isConnected = latestNode !== undefined && (() => {
     const now = new Date().getTime();
     const ts = new Date(latestNode.reading.timestamp).getTime();
@@ -97,18 +100,15 @@ export default function StationDetail() {
         const data = await api.get<HistoryPoint[]>(`/api/v1/readings/${id}/history?start=${timeRange}&interval=${interval}`);
         if (!active) return;
 
-        if (data.length >= 3) {
+        if (Array.isArray(data)) {
           setHistory(data);
         } else {
-          // Generate realistic mockup data if InfluxDB is empty
-          const mockData = generateSimulatedHistory(timeRange, latestNode?.reading);
-          setHistory(mockData);
+          setHistory([]);
         }
       } catch (err) {
-        console.warn('InfluxDB query failed, using simulated fallback history data.', err);
+        console.warn('InfluxDB query failed', err);
         if (active) {
-          const mockData = generateSimulatedHistory(timeRange, latestNode?.reading);
-          setHistory(mockData);
+          setHistory([]);
         }
       } finally {
         if (active) setIsLoading(false);
@@ -121,42 +121,6 @@ export default function StationDetail() {
       active = false;
     };
   }, [id, timeRange, latestNode]);
-
-  // Fallback simulator to make page visually interactive even if InfluxDB is offline
-  const generateSimulatedHistory = (range: TimeRange, currentVal: typeof latestNode.reading | undefined): HistoryPoint[] => {
-    const points: HistoryPoint[] = [];
-    let count = 12;
-    let stepMinutes = 5;
-
-    if (range === '-1h') { count = 60; stepMinutes = 1; }
-    else if (range === '-6h') { count = 72; stepMinutes = 5; }
-    else if (range === '-24h') { count = 96; stepMinutes = 15; }
-    else if (range === '-7d') { count = 168; stepMinutes = 60; }
-    else if (range === '-30d') { count = 120; stepMinutes = 360; }
-
-    const now = new Date();
-    const pm25 = currentVal?.pm.pm2_5 ?? 15.5;
-    const pm10 = currentVal?.pm.pm10 ?? 22.1;
-    const temp = currentVal?.env.temperature ?? 28.5;
-    const hum = currentVal?.env.humidity ?? 60;
-    const iaq = currentVal?.env.iaq ?? 75;
-
-    for (let i = count; i >= 0; i--) {
-      const time = new Date(now.getTime() - i * stepMinutes * 60 * 1000);
-      const rand = (Math.random() - 0.5) * 0.15; // +-7.5% drift
-
-      points.push({
-        timestamp: time.toISOString(),
-        pm2_5: Math.max(0, pm25 + pm25 * rand * Math.sin(i / 5)),
-        pm10: Math.max(0, pm10 + pm10 * rand * Math.sin(i / 4)),
-        temperature: Math.max(15, temp + rand * 1.5 * Math.sin(i / 10)),
-        humidity: Math.max(10, Math.min(100, hum + rand * 10 * Math.sin(i / 6))),
-        iaq: Math.max(0, iaq + iaq * rand * Math.sin(i / 8)),
-      });
-    }
-
-    return points;
-  };
 
   if (!latestNode) {
     return (
@@ -194,8 +158,8 @@ export default function StationDetail() {
           </Link>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold font-mono tracking-widest text-blue-500 uppercase">
-                Node: {reading.node_id}
+              <span className="text-xs font-bold font-mono tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-md uppercase">
+                ID / Codename: {id}
               </span>
               <StatusDot online={isConnected} label={isConnected ? 'Online' : 'Offline'} />
               {latestNode.dcs !== undefined && (
@@ -215,7 +179,7 @@ export default function StationDetail() {
                 </span>
               )}
             </div>
-            <h1 className="text-xl font-bold text-gray-100 mt-0.5">{reading.location}</h1>
+            <h1 className="text-2xl font-bold text-gray-100 mt-1">{displayName}</h1>
           </div>
         </div>
 

@@ -8,6 +8,7 @@ import { ShieldAlert, Layers, RotateCw, Eye } from 'lucide-react';
 interface Room {
   id: string;
   name: string;
+  building_id?: string | null;
   floor: number;
   pos_x: number;
   pos_y: number; // Z-axis in 3D
@@ -16,27 +17,19 @@ interface Room {
   node_id: string | null;
 }
 
-interface RoomPreset {
+interface Building {
   id: string;
   name: string;
-  floor: number;
-  x: number;
-  y: number; // Z in 3D
+  floors: number;
+  pos_x: number;
+  pos_z: number;
+  rotation_y: number;
   width: number;
-  length: number;
+  depth: number;
+  floor_height: number;
+  color_accent: string;
+  description?: string;
 }
-
-const ROOM_PRESETS: Record<string, RoomPreset> = {
-  sandbox_run: { id: 'sandbox_run', name: 'Sandbox Laboratory', floor: 1, x: -12, y: -4, width: 9, length: 7 },
-  node_101: { id: 'node_101', name: 'Classroom 101', floor: 1, x: 0, y: -4, width: 9, length: 7 },
-  node_lobby: { id: 'node_lobby', name: 'Main Lobby', floor: 1, x: 12, y: 0, width: 9, length: 11 },
-  node_201: { id: 'node_201', name: 'Classroom 201', floor: 2, x: -12, y: -4, width: 9, length: 7 },
-  node_202: { id: 'node_202', name: 'Classroom 202', floor: 2, x: 0, y: -4, width: 9, length: 7 },
-  node_staff: { id: 'node_staff', name: 'Staff Room', floor: 2, x: 12, y: -4, width: 9, length: 7 },
-  node_library: { id: 'node_library', name: 'School Library', floor: 3, x: -12, y: 0, width: 9, length: 11 },
-  node_science: { id: 'node_science', name: 'Science Lab', floor: 3, x: 0, y: -4, width: 9, length: 7 },
-  node_301: { id: 'node_301', name: 'Classroom 301', floor: 3, x: 12, y: -4, width: 9, length: 7 },
-};
 
 export default function SchoolMap() {
   const latest = useStore((state) => state.latest);
@@ -44,6 +37,7 @@ export default function SchoolMap() {
 
   // States
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [buildings, setBuildings] = useState<Building[]>([]);
   const [selectedFloor, setSelectedFloor] = useState<string>('all'); // 'all', '1', '2', '3'
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
   const [showWaves, setShowWaves] = useState<boolean>(true);
@@ -102,15 +96,21 @@ export default function SchoolMap() {
     return 'AQI >300 (อันตราย)';
   };
 
-  // 1. Fetch Custom layout rooms on mount
+  // 1. Fetch Custom layout rooms & buildings on mount
   useEffect(() => {
-    const fetchRooms = async () => {
-      const res = await request<Room[]>('/rooms');
-      if (res.ok && res.data) {
-        setRooms(res.data);
+    const fetchData = async () => {
+      const [roomsRes, bldRes] = await Promise.all([
+        request<Room[]>('/rooms'),
+        request<Building[]>('/buildings')
+      ]);
+      if (roomsRes.ok && roomsRes.data) {
+        setRooms(roomsRes.data);
+      }
+      if (bldRes.ok && bldRes.data) {
+        setBuildings(bldRes.data);
       }
     };
-    fetchRooms();
+    fetchData();
   }, []);
 
   // 2. Three.js Initializer
@@ -184,19 +184,19 @@ export default function SchoolMap() {
     ripplesRef.current = [];
     roomMeshesRef.current = [];
 
-    // Helper: Create a Floor Base Plate
+    // Helper: Create a Floor Base Plate (Transparent Architectural White Clay Style)
     const createFloorPlate = (group: THREE.Group, floorNum: number) => {
       const plateWidth = 40;
       const plateLength = 22;
       const geom = new THREE.BoxGeometry(plateWidth, 0.4, plateLength);
       
       const mat = new THREE.MeshPhysicalMaterial({
-        color: 0x5e54e3,
+        color: 0xffffff,
         transparent: true,
-        opacity: 0.08,
-        roughness: 0.1,
-        metalness: 0.1,
-        transmission: 0.8,
+        opacity: 0.65,
+        roughness: 0.15,
+        metalness: 0.05,
+        transmission: 0.25,
         ior: 1.2,
         thickness: 0.5,
         depthWrite: false
@@ -207,10 +207,10 @@ export default function SchoolMap() {
       mesh.receiveShadow = true;
       group.add(mesh);
 
-      // Floor grid lines
-      const gridHelper = new THREE.GridHelper(36, 12, 0x5e54e3, 0x5e54e3);
+      // Floor grid lines in Teal Accent
+      const gridHelper = new THREE.GridHelper(36, 12, 0x0ca4a4, 0x0ca4a4);
       (gridHelper.material as THREE.Material).transparent = true;
-      (gridHelper.material as THREE.Material).opacity = 0.15;
+      (gridHelper.material as THREE.Material).opacity = 0.25;
       gridHelper.position.y = 0.01;
       group.add(gridHelper);
 
@@ -220,7 +220,7 @@ export default function SchoolMap() {
       canvas.height = 64;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.fillStyle = '#5e54e3';
+        ctx.fillStyle = '#0ca4a4';
         ctx.font = 'bold 24px sans-serif';
         ctx.fillText(`FLOOR ${floorNum}`, 10, 40);
       }
@@ -232,13 +232,12 @@ export default function SchoolMap() {
       group.add(sprite);
     };
 
+
     createFloorPlate(floor1Group, 1);
     createFloorPlate(floor2Group, 2);
     createFloorPlate(floor3Group, 3);
 
-    // 7. Define displaying rooms (custom layout or presets fallback)
     const floorGroups = { 1: floor1Group, 2: floor2Group, 3: floor3Group };
-    const presetNodeIds = Object.keys(ROOM_PRESETS);
 
     const displayRooms = rooms.length > 0
       ? rooms.map((r) => {
@@ -265,38 +264,26 @@ export default function SchoolMap() {
           const meta = item.meta;
           const data = item.data;
 
-          let floor = meta?.floor ?? 0;
+          let floor = meta?.floor ?? 1;
           let pos_x = meta?.pos_x ?? 0.0;
           let pos_y = meta?.pos_y ?? 0.0;
 
-          const hasConfig = floor > 0 && (pos_x !== 0 || pos_y !== 0);
-          let preset = ROOM_PRESETS[id];
-          if (!preset) {
-            const matchingPresetKey = presetNodeIds.find(pKey => id.toLowerCase().includes(pKey.replace('node_', '')));
-            if (matchingPresetKey) preset = ROOM_PRESETS[matchingPresetKey];
-          }
-
-          if (!hasConfig && preset) {
-            floor = preset.floor;
-            pos_x = preset.x;
-            pos_y = preset.y;
-          }
-
-          if (floor <= 0) {
+          // Fallback simple grid if entirely unconfigured (0,0)
+          if (floor <= 0 || (pos_x === 0 && pos_y === 0 && floor === 1)) {
             floor = 1;
             pos_x = -15 + (idx % 4) * 10;
             pos_y = -6 + Math.floor(idx / 4) * 8;
           }
 
-          const roomName = meta?.display_name || preset?.name || data.reading.location || `Room ${id}`;
+          const roomName = meta?.display_name || data.reading.location || `Room ${id}`;
           return {
             id,
             roomName,
             floor,
             x: pos_x,
             y: pos_y,
-            width: preset?.width || 8,
-            length: preset?.length || 7,
+            width: 8,
+            length: 7,
             height: 3.5,
             node_id: id,
             aqiScore: data.aqi.aqi_score,
@@ -321,18 +308,19 @@ export default function SchoolMap() {
       const isAssociated = placement.node_id !== null;
       const aqiColor = getAQIColorHex(placement.aqiScore);
 
-      // Class box material
+      // Class box material (Transparent Architectural White Clay Style with AQI tint)
       const glassMat = new THREE.MeshPhysicalMaterial({
-        color: isAssociated ? (placement.online ? aqiColor : 0x64748b) : 0x475569, // slate grey for static layout structures
+        color: isAssociated ? (placement.online ? aqiColor : 0x94a3b8) : 0xf1f5f9,
         transparent: true,
-        opacity: 0.12,
-        roughness: 0.3,
+        opacity: 0.50,
+        roughness: 0.2,
         metalness: 0.05,
-        transmission: 0.7,
-        ior: 1.1,
-        thickness: 0.3,
-        depthWrite: false
+        transmission: 0.35,
+        ior: 1.15,
+        thickness: 0.4,
+        depthWrite: true
       });
+
 
       const roomMesh = new THREE.Mesh(geom, glassMat);
       roomMesh.castShadow = true;

@@ -1,23 +1,23 @@
 export interface PMData {
-  pm1_0?: number;
-  pm2_5?: number;
-  pm10?: number;
+  pm1_0?: number | null;
+  pm2_5?: number | null;
+  pm10?: number | null;
 }
 
 export interface EnvData {
-  temperature?: number;
-  humidity?: number;
-  iaq?: number;
+  temperature?: number | null;
+  humidity?: number | null;
+  iaq?: number | null;
 }
 
 export interface SoundData {
-  db_avg?: number;
-  db_peak?: number;
+  db_avg?: number | null;
+  db_peak?: number | null;
 }
 
 export interface NodeMeta {
-  rssi?: number;
-  uptime_s?: number;
+  rssi?: number | null;
+  uptime_s?: number | null;
   sim: boolean;
 }
 
@@ -33,7 +33,11 @@ export interface SensorReading {
 
 export interface AQIResult {
   aqi_score: number;
+  /** snake_case level key matching backend: good | moderate | unhealthy_sensitive | unhealthy | very_unhealthy | hazardous */
   aqi_level: string;
+  aqi_color?: string;
+  dominant?: string;
+  advice?: string;
 }
 
 export type WSMessageType = 'sensor_update' | 'alert' | 'heartbeat' | 'master_status_update' | 'weather_update';
@@ -41,7 +45,9 @@ export type WSMessageType = 'sensor_update' | 'alert' | 'heartbeat' | 'master_st
 export interface WSMessage {
   type: WSMessageType;
   node_id?: string;
-  timestamp?: string;
-  data?: any; // SensorReading, alert details, etc.
+  timestamp?: string | number;
+  status?: string;
+  dcs?: number;
+  data?: any; // SensorReading, alert details, weather, etc.
   aqi?: AQIResult;
 }

@@ -28,6 +28,7 @@ export interface NodeMeta {
   pos_x?: number;
   pos_y?: number;
   floor?: number;
+  image_url?: string;
   created_at: string;
 }
 
@@ -86,8 +87,8 @@ export const useStore = create<Store>((set) => ({
           [msg.node_id]: { 
             reading: msg.data, 
             aqi: msg.aqi,
-            status: (msg as any).status,
-            dcs: (msg as any).dcs
+            status: msg.status,
+            dcs: msg.dcs
           }
         },
         alerts: cleanedAlerts,

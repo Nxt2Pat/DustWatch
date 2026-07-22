@@ -9,6 +9,7 @@ import SparkLine from '../components/charts/SparkLine';
 import AlertTicker from '../components/alerts/AlertTicker';
 import EmptyState from '../components/ui/EmptyState';
 import MapPositionEditor from '../components/MapPositionEditor';
+import BackgroundManagerModal from '../components/BackgroundManagerModal';
 
 import { getApiBaseUrl } from '../api/sourceConfig';
 
@@ -33,7 +34,7 @@ export default function Dashboard() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedNodeIdForEdit, setSelectedNodeIdForEdit] = useState<string | null>(null);
-  const [tempConfigs, setTempConfigs] = useState<Record<string, { active: number; display_name: string; tag: string; status: string; confirmed: number; pos_x: number; pos_y: number; floor: number }>>({});
+  const [tempConfigs, setTempConfigs] = useState<Record<string, { active: number; display_name: string; tag: string; status: string; confirmed: number; pos_x: number; pos_y: number; floor: number; image_url: string }>>({});
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
 
   // Fetch backend health on mount and poll every 15s
@@ -88,7 +89,7 @@ export default function Dashboard() {
     });
 
   const handleOpenSettings = () => {
-    const configs: Record<string, { active: number; display_name: string; tag: string; status: string; confirmed: number; pos_x: number; pos_y: number; floor: number }> = {};
+    const configs: Record<string, { active: number; display_name: string; tag: string; status: string; confirmed: number; pos_x: number; pos_y: number; floor: number; image_url: string }> = {};
     let firstActiveId: string | null = null;
     allNodeIds.forEach((id) => {
       const meta = nodesMeta[id];
@@ -103,6 +104,7 @@ export default function Dashboard() {
         pos_x: meta ? (meta.pos_x ?? 0.0) : 0.0,
         pos_y: meta ? (meta.pos_y ?? 0.0) : 0.0,
         floor: meta ? (meta.floor ?? 1) : 1,
+        image_url: meta ? (meta.image_url ?? '') : '',
       };
       if (active === 1 && !firstActiveId) {
         firstActiveId = id;
@@ -155,6 +157,143 @@ export default function Dashboard() {
       setIsSettingsOpen(false);
     } catch (err) {
       console.error("Failed to update node settings", err);
+    }
+  };
+
+  const [isHealthCustomizerOpen, setIsHealthCustomizerOpen] = useState(false);
+  const [healthAnnouncement, setHealthAnnouncement] = useState('');
+  const [healthOutdoor, setHealthOutdoor] = useState('');
+  const [healthSensitive, setHealthSensitive] = useState('');
+  const [healthVentilation, setHealthVentilation] = useState('');
+  const [healthSaveMsg, setHealthSaveMsg] = useState<string | null>(null);
+
+  // Load custom health settings when modal opens
+  const handleOpenHealthCustomizer = () => {
+    try {
+      const saved = localStorage.getItem('dustwatch_health_custom_settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setHealthAnnouncement(parsed.announcement || '');
+        setHealthOutdoor(parsed.outdoor || '');
+        setHealthSensitive(parsed.sensitive || '');
+        setHealthVentilation(parsed.ventilation || '');
+      }
+    } catch (e) {
+      console.error("Failed to load health settings", e);
+    }
+    setHealthSaveMsg(null);
+    setIsHealthCustomizerOpen(true);
+  };
+
+  const handleSaveHealthCustomizer = () => {
+    const payload = {
+      announcement: healthAnnouncement.trim(),
+      outdoor: healthOutdoor.trim(),
+      sensitive: healthSensitive.trim(),
+      ventilation: healthVentilation.trim(),
+    };
+
+    localStorage.setItem('dustwatch_health_custom_settings', JSON.stringify(payload));
+
+    // Broadcast across tabs to frontend
+    try {
+      const channel = new BroadcastChannel('dustwatch_health_settings');
+      channel.postMessage(payload);
+      channel.close();
+    } catch (e) {
+      console.error("Broadcast failed", e);
+    }
+
+    setHealthSaveMsg('บันทึกและส่งสัญญาณอัปเดตไปยังหน้าเว็บหลักและมือถือเรียบร้อยแล้ว!');
+    setTimeout(() => {
+      setHealthSaveMsg(null);
+      setIsHealthCustomizerOpen(false);
+    }, 1200);
+  };
+
+  // ─── Dynamic Background Manager States & Handlers ───
+  const [isBgManagerOpen, setIsBgManagerOpen] = useState(false);
+  const [bgConfig, setBgConfig] = useState<{
+    image_url: string;
+    blur_px: number;
+    opacity: number;
+    overlay_mode: string;
+    active: number;
+  }>({
+    image_url: '',
+    blur_px: 4,
+    opacity: 0.65,
+    overlay_mode: 'dark',
+    active: 1
+  });
+  const [isUploadingBg, setIsUploadingBg] = useState(false);
+  const [bgSaveMsg, setBgSaveMsg] = useState<string | null>(null);
+
+  const handleOpenBgManager = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/system/background`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.ok && json.data) {
+          setBgConfig(json.data);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch bg config from API', e);
+    }
+    setIsBgManagerOpen(true);
+  };
+
+  const handleUploadBgFile = async (file: File) => {
+    setIsUploadingBg(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${API_BASE}/api/v1/system/background/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      const json = await res.json();
+      if (json.ok && json.data?.image_url) {
+        setBgConfig(prev => ({ ...prev, image_url: json.data.image_url }));
+        setBgSaveMsg('อัปโหลดไฟล์ภาพเรียบร้อยแล้ว');
+        setTimeout(() => setBgSaveMsg(null), 3000);
+      } else {
+        alert(json.error || 'Failed to upload image file');
+      }
+    } catch (e) {
+      console.error('Failed to upload image', e);
+      alert('Upload failed');
+    } finally {
+      setIsUploadingBg(false);
+    }
+  };
+
+  const handleSaveBgManager = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/system/background`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bgConfig)
+      });
+      const json = await res.json();
+      
+      // Save to localStorage & broadcast via BroadcastChannel
+      localStorage.setItem('dustwatch_bg_config', JSON.stringify(bgConfig));
+      try {
+        const channel = new BroadcastChannel('dustwatch_background');
+        channel.postMessage(bgConfig);
+        channel.close();
+      } catch (e) {}
+
+      setBgSaveMsg('บันทึกรูปภาพและส่งสัญญาณแสดงผลไปยังเว็บหลักเรียบร้อยแล้ว!');
+      setTimeout(() => {
+        setBgSaveMsg(null);
+        setIsBgManagerOpen(false);
+      }, 1500);
+    } catch (e) {
+      console.error('Failed to save background config', e);
+      alert('Failed to save background settings');
     }
   };
 
@@ -222,14 +361,25 @@ export default function Dashboard() {
           Air Quality Stations
         </h2>
         
-        {/* Settings trigger */}
-        <button
-          onClick={handleOpenSettings}
-          className="text-gray-400 hover:text-white transition-colors text-xs font-bold font-mono px-3 py-1 rounded-xl border border-white/5 bg-white/5 cursor-pointer flex items-center gap-1.5"
-        >
-          ⚙️ Manage Nodes
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Health Customizer Trigger */}
+          <button
+            onClick={handleOpenHealthCustomizer}
+            className="text-cyan-400 hover:text-cyan-300 transition-colors text-xs font-bold font-mono px-3 py-1 rounded-xl border border-cyan-500/30 bg-cyan-500/10 cursor-pointer flex items-center gap-1.5"
+          >
+            📢 ประกาศ & คำแนะนำสุขภาพ
+          </button>
+
+          {/* Settings trigger */}
+          <button
+            onClick={handleOpenSettings}
+            className="text-gray-400 hover:text-white transition-colors text-xs font-bold font-mono px-3 py-1 rounded-xl border border-white/5 bg-white/5 cursor-pointer flex items-center gap-1.5"
+          >
+            ⚙️ Manage Nodes
+          </button>
+        </div>
       </div>
+
 
       {/* ─── Device Toggle Checklist ─── */}
       <div className="p-5 rounded-3xl border border-white/5 bg-gradient-to-r from-blue-950/20 to-indigo-950/20 backdrop-blur-md space-y-3.5">
@@ -381,6 +531,9 @@ export default function Dashboard() {
                   <h3 className="text-xl font-bold text-gray-100 group-hover:text-white transition-colors mt-1">
                     {displayName}
                   </h3>
+                  <div className="text-[10px] font-mono font-bold text-cyan-400/90 mt-0.5 flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.2 rounded bg-cyan-500/10 border border-cyan-500/20">ID / Codename: {nodeId}</span>
+                  </div>
                 </div>
                 <span className="text-[10px] font-mono text-gray-500 shrink-0">
                   {isOnline ? new Date(reading.timestamp).toLocaleTimeString() : 'OFFLINE'}
@@ -573,33 +726,113 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      {/* Display name */}
-                      <div>
-                        <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1 font-mono">Display Name</label>
-                        <input
-                          type="text"
-                          value={conf.display_name}
-                          onChange={(e) => setTempConfigs({
-                            ...tempConfigs,
-                            [id]: { ...conf, display_name: e.target.value }
-                          })}
-                          className="w-full px-3 py-1.5 rounded-lg border border-white/5 bg-white/5 text-xs text-gray-200 focus:outline-none"
-                        />
+                      {/* Hardware Codename & Display Name */}
+                      <div className="space-y-2">
+                        <div>
+                          <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1 font-mono">
+                            Hardware Codename (ชื่อรหัสเดิมในระบบ)
+                          </label>
+                          <div className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-xs font-mono font-bold text-blue-400 flex items-center justify-between">
+                            <span>{id}</span>
+                            <span className="text-[9px] font-normal text-gray-500 uppercase">Fixed Identifier</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1 font-mono">
+                            Display Name (ชื่อแสดง / ชื่อเล่นประจำจุด)
+                          </label>
+                          <input
+                            type="text"
+                            value={conf.display_name}
+                            onChange={(e) => setTempConfigs({
+                              ...tempConfigs,
+                              [id]: { ...conf, display_name: e.target.value }
+                            })}
+                            placeholder="เช่น ห้องเรียน ป.4/1 หรือ โดมกิจกรรม"
+                            className="w-full px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-xs font-semibold text-gray-100 focus:outline-none focus:border-blue-500"
+                          />
+                          {/* Quick preset buttons */}
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {['ห้องเรียน 4/1', 'ห้องเรียน 4/2', 'โดมกิจกรรมกลางแจ้ง', 'สนามฟุตบอล', 'โรงอาหาร', 'ห้องสมุด'].map((preset) => (
+                              <button
+                                key={preset}
+                                type="button"
+                                onClick={() => setTempConfigs({
+                                  ...tempConfigs,
+                                  [id]: { ...conf, display_name: preset }
+                                })}
+                                className="px-2 py-0.5 rounded text-[9px] font-mono bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 cursor-pointer"
+                              >
+                                + {preset}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Custom tag */}
+                      {/* Environment Type */}
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1 font-mono">Custom Tag</label>
-                        <input
-                          type="text"
-                          value={conf.tag}
-                          placeholder="e.g. Room A"
+                        <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1 font-mono">Environment Type (ใน/นอกอาคาร)</label>
+                        <select
+                          value={conf.tag.toLowerCase().includes('outdoor') ? 'outdoor' : (conf.tag.toLowerCase().includes('indoor') ? 'indoor' : conf.tag || 'indoor')}
                           onChange={(e) => setTempConfigs({
                             ...tempConfigs,
                             [id]: { ...conf, tag: e.target.value }
                           })}
-                          className="w-full px-3 py-1.5 rounded-lg border border-white/5 bg-white/5 text-xs text-gray-200 focus:outline-none"
-                        />
+                          className="w-full px-3 py-1.5 rounded-lg border border-white/5 bg-[#0d101a] text-xs text-gray-200 focus:outline-none cursor-pointer"
+                        >
+                          <option value="indoor">ภายในอาคาร (Indoor)</option>
+                          <option value="outdoor">ภายนอกอาคาร (Outdoor)</option>
+                        </select>
+                      </div>
+
+                      {/* Node Image Photo */}
+                      <div>
+                        <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1 font-mono">
+                          Node Location Photo (รูปภาพจุดติดตั้ง / ห้องเรียนประจำโหนด)
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <label className="px-3 py-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-mono font-bold cursor-pointer transition-all flex items-center gap-1">
+                            <span>📷 {isUploadingNodePhoto ? 'กำลังอัปโหลด...' : 'อัปโหลดภาพ'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={isUploadingNodePhoto}
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  handleUploadNodePhoto(id, e.target.files[0]);
+                                }
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                          <input
+                            type="text"
+                            value={conf.image_url || ''}
+                            onChange={(e) => setTempConfigs({
+                              ...tempConfigs,
+                              [id]: { ...conf, image_url: e.target.value }
+                            })}
+                            placeholder="หรือวาง URL รูปภาพ..."
+                            className="flex-1 px-3 py-1.5 rounded-lg border border-white/5 bg-white/5 text-xs font-mono text-gray-200 focus:outline-none focus:border-cyan-500"
+                          />
+                        </div>
+                        {conf.image_url && (
+                          <div className="mt-2 h-20 w-full rounded-xl overflow-hidden border border-white/10 relative group">
+                            <img src={conf.image_url} alt="Node Preview" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setTempConfigs({
+                                ...tempConfigs,
+                                [id]: { ...conf, image_url: '' }
+                              })}
+                              className="absolute top-1 right-1 bg-black/60 hover:bg-rose-600 text-white p-1 rounded-md text-[10px] font-mono cursor-pointer"
+                            >
+                              ✕ ลบรูป
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Status */}
@@ -697,6 +930,138 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* ─── School Health & Air Safety Customizer Modal ─── */}
+      {isHealthCustomizerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="bg-[#0b0e17] border border-cyan-500/30 rounded-3xl p-6 w-full max-w-2xl space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📢</span>
+                <div>
+                  <h3 className="text-sm font-extrabold text-white font-mono tracking-tight">
+                    จัดการประกาศ & คำแนะนำสุขภาพโรงเรียน (School Health Customizer)
+                  </h3>
+                  <p className="text-[11px] text-gray-400">
+                    แก้ไขประกาศด่วนและข้อความคำแนะนำสุขภาพ การกดบันทึกจะส่งสัญญาณอัปเดตไปยังหน้าเว็บหลักและมือถือทันที
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsHealthCustomizerOpen(false)}
+                className="text-gray-400 hover:text-white text-lg font-bold px-2 py-1 rounded-lg hover:bg-white/10"
+              >
+                ✕
+              </button>
+            </div>
+
+            {healthSaveMsg && (
+              <div className="bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs px-4 py-3 rounded-2xl font-mono font-bold animate-fadeIn">
+                ✨ {healthSaveMsg}
+              </div>
+            )}
+
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1 no-scrollbar text-xs">
+              {/* Field 1: Urgent Notice */}
+              <div>
+                <label className="block text-xs font-bold text-cyan-400 font-mono mb-1.5">
+                  📢 ประกาศพิเศษด่วนจากโรงเรียน (Urgent School Notice) — ปล่อยว่างถ้าไม่มีประกาศ
+                </label>
+                <textarea
+                  rows={2}
+                  value={healthAnnouncement}
+                  onChange={(e) => setHealthAnnouncement(e.target.value)}
+                  placeholder="เช่น: แจ้งนักเรียนทุกชั้นปี สัปดาห์นี้เตรียมสอบกลางภาค งดใช้เสียงและย้ายกิจกรรมพละเข้าโดม"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-white placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 transition-all font-sans"
+                />
+              </div>
+
+              {/* Field 2: Outdoor Activity Override */}
+              <div>
+                <label className="block text-xs font-bold text-gray-300 font-mono mb-1.5">
+                  ⚽ คำแนะนำกิจกรรมพลศึกษา & กลางแจ้ง (Outdoor Activities Advice) — ปล่อยว่างเพื่อใช้ค่าจาก AQI อัตโนมัติ
+                </label>
+                <input
+                  type="text"
+                  value={healthOutdoor}
+                  onChange={(e) => setHealthOutdoor(e.target.value)}
+                  placeholder="เช่น: งดออกกำลังกายกลางแจ้ง ให้ทำกิจกรรมในร่มแทน"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-white placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 transition-all font-sans"
+                />
+              </div>
+
+              {/* Field 3: Sensitive Shield Override */}
+              <div>
+                <label className="block text-xs font-bold text-gray-300 font-mono mb-1.5">
+                  🫁 คำแนะนำกลุ่มเปราะบาง (Sensitive Shield Advice) — ปล่อยว่างเพื่อใช้ค่าจาก AQI อัตโนมัติ
+                </label>
+                <input
+                  type="text"
+                  value={healthSensitive}
+                  onChange={(e) => setHealthSensitive(e.target.value)}
+                  placeholder="เช่น: นักเรียนที่มีโรคประจำตัว (หอบหืด/ภูมิแพ้) ควรหลีกเลี่ยงฝุ่นละออง"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-white placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 transition-all font-sans"
+                />
+              </div>
+
+              {/* Field 4: Classroom Ventilation Override */}
+              <div>
+                <label className="block text-xs font-bold text-gray-300 font-mono mb-1.5">
+                  🪟 คำแนะนำการถ่ายเทอากาศห้องเรียน (Ventilation Advice) — ปล่อยว่างเพื่อใช้ค่าจาก AQI อัตโนมัติ
+                </label>
+                <input
+                  type="text"
+                  value={healthVentilation}
+                  onChange={(e) => setHealthVentilation(e.target.value)}
+                  placeholder="เช่น: ให้ปิดประตูหน้าต่างห้องเรียน และเปิดระบบกรองอากาศด่วน"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-white placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 transition-all font-sans"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-3 border-t border-white/10">
+              <button
+                onClick={() => {
+                  setHealthAnnouncement('');
+                  setHealthOutdoor('');
+                  setHealthSensitive('');
+                  setHealthVentilation('');
+                }}
+                className="text-xs text-gray-400 hover:text-rose-400 transition-colors font-mono cursor-pointer"
+              >
+                🗑️ ล้างข้อความทั้งหมด (Reset to Defaults)
+              </button>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsHealthCustomizerOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white bg-white/5 border border-white/10 cursor-pointer font-mono"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={handleSaveHealthCustomizer}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-cyan-500 hover:bg-cyan-600 cursor-pointer shadow-lg shadow-cyan-500/25 font-mono"
+                >
+                  💾 บันทึกและส่งสัญญาณอัปเดต (Save & Broadcast)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Dynamic Background Manager Modal Overlay ─── */}
+      <BackgroundManagerModal
+        isOpen={isBgManagerOpen}
+        onClose={() => setIsBgManagerOpen(false)}
+        config={bgConfig}
+        onChangeConfig={(newConfig) => setBgConfig(newConfig)}
+        onSave={handleSaveBgManager}
+        onUploadFile={handleUploadBgFile}
+        isUploading={isUploadingBg}
+        saveMsg={bgSaveMsg}
+      />
     </div>
   );
 }

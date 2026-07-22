@@ -29,18 +29,15 @@ export default function SparkLine({ nodeId, currentVal }: SparkLineProps) {
           .map((d) => d.pm2_5 ?? d.pm25 ?? 0)
           .filter((v) => typeof v === 'number');
 
-        if (points.length >= 3) {
+        if (Array.isArray(points)) {
           setHistory(points);
         } else {
-          // If empty (e.g. InfluxDB offline), generate mock history based on current value
-          const mockPoints = generateMockHistory(currentVal);
-          setHistory(mockPoints);
+          setHistory([]);
         }
       } catch (err) {
-        console.warn(`Failed to fetch history for sparkline of node ${nodeId}, using simulated curve.`, err);
+        console.warn(`Failed to fetch history for sparkline of node ${nodeId}`, err);
         if (active) {
-          const mockPoints = generateMockHistory(currentVal);
-          setHistory(mockPoints);
+          setHistory([]);
         }
       } finally {
         if (active) setIsLoading(false);
@@ -57,24 +54,6 @@ export default function SparkLine({ nodeId, currentVal }: SparkLineProps) {
       clearInterval(intervalId);
     };
   }, [nodeId, currentVal]);
-
-  // Helper to generate simulated 12-point history curve matching currentVal
-  const generateMockHistory = (baseVal: number): number[] => {
-    const points: number[] = [];
-    const count = 12; // 1 hour at 5m aggregate
-    let current = baseVal > 0 ? baseVal : 15;
-    
-    for (let i = 0; i < count; i++) {
-      // Create random walk fluctuation (up to +-15%)
-      const changePercent = (Math.random() - 0.5) * 0.15;
-      current = Math.max(0, current + current * changePercent);
-      points.push(current);
-    }
-    
-    // Set the last element to the currentVal for consistency
-    points[points.length - 1] = baseVal;
-    return points;
-  };
 
   // Convert numerical array values to SVG coordinate points string
   const getSVGPoints = (vals: number[], width: number, height: number) => {
@@ -101,10 +80,18 @@ export default function SparkLine({ nodeId, currentVal }: SparkLineProps) {
     return `M 0,${svgHeight} L ${pointsStr} L ${svgWidth},${svgHeight} Z`;
   };
 
-  if (isLoading || history.length === 0) {
+  if (isLoading) {
     return (
       <div className="h-[42px] w-[140px] flex items-center justify-center text-[10px] text-gray-500 font-mono">
         Loading...
+      </div>
+    );
+  }
+
+  if (history.length === 0) {
+    return (
+      <div className="h-[42px] w-[140px] flex items-center justify-center text-[10px] text-gray-500 font-mono">
+        No History
       </div>
     );
   }
