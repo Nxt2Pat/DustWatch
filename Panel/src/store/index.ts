@@ -99,7 +99,7 @@ export const useStore = create<Store>((set) => ({
     if (msg.type === 'alert' && msg.node_id && msg.data) {
       const newAlert: AlertData = {
         node_id: msg.node_id,
-        timestamp: msg.timestamp || new Date().toISOString(),
+        timestamp: msg.timestamp != null ? String(msg.timestamp) : new Date().toISOString(),
         alert_type: msg.data.alert_type,
         value: msg.data.value,
         threshold: msg.data.threshold,
@@ -117,7 +117,7 @@ export const useStore = create<Store>((set) => ({
           status: msg.data.status || "online",
           uptime_s: msg.data.uptime_s,
           free_heap: msg.data.free_heap,
-          timestamp: msg.timestamp
+          timestamp: msg.timestamp != null ? String(msg.timestamp) : undefined
         },
         stream: updatedStream
       };

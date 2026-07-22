@@ -271,12 +271,11 @@ export default function Dashboard() {
 
   const handleSaveBgManager = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/v1/system/background`, {
+      await fetch(`${API_BASE}/api/v1/system/background`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bgConfig)
       });
-      const json = await res.json();
       
       // Save to localStorage & broadcast via BroadcastChannel
       localStorage.setItem('dustwatch_bg_config', JSON.stringify(bgConfig));
@@ -294,6 +293,35 @@ export default function Dashboard() {
     } catch (e) {
       console.error('Failed to save background config', e);
       alert('Failed to save background settings');
+    }
+  };
+
+  // ─── Node Photo Upload States & Handlers ───
+  const [isUploadingNodePhoto, setIsUploadingNodePhoto] = useState(false);
+
+  const handleUploadNodePhoto = async (nodeId: string, file: File) => {
+    setIsUploadingNodePhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${API_BASE}/api/v1/nodes/${nodeId}/upload-image`, {
+        method: 'POST',
+        body: formData
+      });
+      const json = await res.json();
+      if (json.ok && json.data?.image_url) {
+        setTempConfigs((prev) => ({
+          ...prev,
+          [nodeId]: { ...prev[nodeId], image_url: json.data.image_url }
+        }));
+      } else {
+        alert(json.error || 'อัปโหลดไม่สำเร็จ');
+      }
+    } catch (e) {
+      console.error('Failed to upload node photo', e);
+      alert('อัปโหลดไม่สำเร็จ');
+    } finally {
+      setIsUploadingNodePhoto(false);
     }
   };
 

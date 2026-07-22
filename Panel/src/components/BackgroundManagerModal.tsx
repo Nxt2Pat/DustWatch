@@ -1,4 +1,3 @@
-import { useState } from 'react';
 
 interface BackgroundConfig {
   image_url: string;

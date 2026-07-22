@@ -146,7 +146,7 @@ export default function StationDetail() {
     return { label: 'Unhealthy', color: 'text-red-400' };
   };
 
-  const iaqStat = getIAQStatus(reading.env.iaq);
+  const iaqStat = getIAQStatus(reading.env.iaq ?? undefined);
 
   return (
     <div className="space-y-6">
