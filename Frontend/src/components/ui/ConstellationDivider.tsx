@@ -1,10 +1,16 @@
 interface ConstellationDividerProps {
+  label?: string;
   className?: string;
 }
 
-export default function ConstellationDivider({ className = '' }: ConstellationDividerProps) {
+export default function ConstellationDivider({ label, className = '' }: ConstellationDividerProps) {
   return (
-    <div className={`w-full py-4 flex items-center justify-center select-none ${className}`}>
+    <div className={`w-full py-4 flex flex-col items-center justify-center select-none ${className}`}>
+      {label && (
+        <span className="text-xs font-medium tracking-wider text-slate-500 uppercase mb-1">
+          {label}
+        </span>
+      )}
       <svg 
         viewBox="0 0 600 30" 
         fill="none" 

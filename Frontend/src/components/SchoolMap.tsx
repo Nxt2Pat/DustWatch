@@ -37,7 +37,7 @@ export default function SchoolMap() {
 
   // States
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [, setBuildings] = useState<Building[]>([]);
   const [selectedFloor, setSelectedFloor] = useState<string>('all'); // 'all', '1', '2', '3'
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
   const [showWaves, setShowWaves] = useState<boolean>(true);
