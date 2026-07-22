@@ -370,6 +370,14 @@ export default function Dashboard() {
             📢 ประกาศ & คำแนะนำสุขภาพ
           </button>
 
+          {/* Background Manager Trigger */}
+          <button
+            onClick={handleOpenBgManager}
+            className="text-emerald-400 hover:text-emerald-300 transition-colors text-xs font-bold font-mono px-3 py-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 cursor-pointer flex items-center gap-1.5"
+          >
+            🖼️ รูปพื้นหลัง
+          </button>
+
           {/* Settings trigger */}
           <button
             onClick={handleOpenSettings}
