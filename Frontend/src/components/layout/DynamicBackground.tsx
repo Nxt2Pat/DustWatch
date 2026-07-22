@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useStore } from '../../store';
+import { getApiBaseUrl } from '../../api/sourceConfig';
 
 export interface BackgroundConfig {
   image_url: string;
+  image_urls?: string[];
+  mode?: string; // 'slideshow' | 'static' | 'random'
+  slideshow_interval_sec?: number;
   blur_px: number;
   opacity: number;
   overlay_mode: string;
@@ -21,6 +25,9 @@ export function getLocalBackgroundConfig(): BackgroundConfig {
   }
   return {
     image_url: '',
+    image_urls: [],
+    mode: 'slideshow',
+    slideshow_interval_sec: 10,
     blur_px: 4,
     opacity: 0.65,
     overlay_mode: 'dark',
@@ -44,11 +51,15 @@ export default function DynamicBackground() {
   const location = useLocation();
   const nodesMeta = useStore((state) => state.nodesMeta);
 
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [randomImageIndex, setRandomImageIndex] = useState(0);
+
   useEffect(() => {
     // 1. Fetch initial config from backend API
     const fetchConfig = async () => {
       try {
-        const res = await fetch('/api/v1/system/background');
+        const apiBase = getApiBaseUrl();
+        const res = await fetch(`${apiBase}/api/v1/system/background`);
         if (res.ok) {
           const json = await res.json();
           if (json.ok && json.data) {
@@ -92,25 +103,65 @@ export default function DynamicBackground() {
     };
   }, []);
 
-  // Check if current page is station detail (/station/:id)
-  let nodeSpecificImageUrl: string | null = null;
+  // Determine active image list based on route (Per-node vs Global)
+  let activeImageList: string[] = [];
   const match = location.pathname.match(/\/station(?:s|-detail)?\/([^/]+)/i);
   if (match && match[1]) {
     const stationId = match[1];
-    const nodeImage = nodesMeta[stationId]?.image_url;
-    if (nodeImage && nodeImage.trim() !== '') {
-      nodeSpecificImageUrl = nodeImage;
+    const meta = nodesMeta[stationId];
+    if (meta) {
+      if (meta.image_urls && meta.image_urls.length > 0) {
+        activeImageList = meta.image_urls;
+      } else if (meta.image_url && meta.image_url.trim() !== '') {
+        activeImageList = [meta.image_url];
+      }
     }
   }
 
-  const activeImageUrl = nodeSpecificImageUrl || config.image_url;
+  // Fallback to global config gallery
+  if (activeImageList.length === 0) {
+    if (config.image_urls && config.image_urls.length > 0) {
+      activeImageList = config.image_urls;
+    } else if (config.image_url && config.image_url.trim() !== '') {
+      activeImageList = [config.image_url];
+    }
+  }
 
-  if (!config.active || !activeImageUrl) {
+  // Handle Random Mode initial assignment
+  useEffect(() => {
+    if (config.mode === 'random' && activeImageList.length > 0) {
+      const rand = Math.floor(Math.random() * activeImageList.length);
+      setRandomImageIndex(rand);
+    }
+  }, [config.mode, activeImageList.length, location.pathname]);
+
+  // Slideshow auto-advance timer
+  const mode = config.mode || 'slideshow';
+  const intervalSec = Math.max(3, config.slideshow_interval_sec || 10);
+
+  useEffect(() => {
+    if (!config.active || activeImageList.length <= 1 || mode !== 'slideshow') return;
+
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % activeImageList.length);
+    }, intervalSec * 1000);
+
+    return () => clearInterval(timer);
+  }, [config.active, activeImageList.length, mode, intervalSec]);
+
+  if (!config.active || activeImageList.length === 0) {
     return null;
   }
 
-  // Resolve image URL (if relative like /static/uploads/...)
-  const bgUrl = activeImageUrl.startsWith('/') ? activeImageUrl : activeImageUrl;
+  // Determine current display URL
+  let activeUrl = activeImageList[0];
+  if (mode === 'slideshow') {
+    activeUrl = activeImageList[currentIndex % activeImageList.length];
+  } else if (mode === 'random') {
+    activeUrl = activeImageList[randomImageIndex % activeImageList.length];
+  } else if (config.image_url && activeImageList.includes(config.image_url)) {
+    activeUrl = config.image_url;
+  }
 
   // Determine overlay style
   const getOverlayClass = () => {
@@ -130,16 +181,23 @@ export default function DynamicBackground() {
   };
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden transition-all duration-700 select-none">
-      {/* Background Image Layer */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-700 transform scale-105"
-        style={{
-          backgroundImage: `url("${bgUrl}")`,
-          filter: `blur(${config.blur_px}px)`,
-          opacity: config.opacity,
-        }}
-      />
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden transition-all duration-1000 select-none">
+      {/* Render all image layers with opacity transition for smooth cross-fade */}
+      {activeImageList.map((url, idx) => {
+        const isVisible = url === activeUrl;
+        const bgUrl = url.startsWith('/') ? `${getApiBaseUrl()}${url}` : url;
+        return (
+          <div
+            key={url + idx}
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ease-in-out transform scale-105"
+            style={{
+              backgroundImage: `url("${bgUrl}")`,
+              filter: `blur(${config.blur_px}px)`,
+              opacity: isVisible ? config.opacity : 0,
+            }}
+          />
+        );
+      })}
 
       {/* Dynamic Tint / Glass Overlay Layer */}
       <div className={`absolute inset-0 transition-all duration-500 ${getOverlayClass()}`} />

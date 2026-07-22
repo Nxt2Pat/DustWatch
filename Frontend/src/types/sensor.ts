@@ -92,6 +92,7 @@ export interface NodeMeta {
   floor?: number;
   env_type?: 'indoor' | 'outdoor';
   image_url?: string;
+  image_urls?: string[];
   created_at: string;
   updated_at?: string;
 }

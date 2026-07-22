@@ -85,6 +85,11 @@ export function getApiUrl(): string {
   return clean.endsWith('/api/v1') ? clean : `${clean}/api/v1`;
 }
 
+export function getApiBaseUrl(): string {
+  const apiUrl = getApiUrl();
+  return apiUrl.replace(/\/api\/v1\/?$/i, '');
+}
+
 export function getWsUrl(): string {
   const src = getActiveSource();
   const envWsUrl = import.meta.env.VITE_WS_URL;

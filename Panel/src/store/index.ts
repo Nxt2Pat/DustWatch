@@ -29,6 +29,7 @@ export interface NodeMeta {
   pos_y?: number;
   floor?: number;
   image_url?: string;
+  image_urls?: string[];
   created_at: string;
 }
 

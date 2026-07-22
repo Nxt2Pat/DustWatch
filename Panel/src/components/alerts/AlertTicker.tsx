@@ -9,8 +9,8 @@ export default function AlertTicker() {
   const tickerItems = [...alerts.slice(0, 10), ...alerts.slice(0, 10)];
 
   return (
-    <div className="relative flex items-center h-10 w-full overflow-hidden rounded-xl border border-red-500/10 bg-red-500/5 backdrop-blur-md">
-      {/* Inline styles for keyframe animation to make it self-contained */}
+    <div className="relative flex items-center h-10 w-full overflow-hidden rounded-2xl border border-rose-500/30 bg-rose-950/20 backdrop-blur-xl shadow-[0_4px_20px_rgba(244,63,94,0.15)]">
+      {/* Inline styles for keyframe animation */}
       <style>{`
         @keyframes marquee {
           0% { transform: translate3d(0, 0, 0); }
@@ -27,8 +27,8 @@ export default function AlertTicker() {
       `}</style>
 
       {/* Static Label Badge */}
-      <div className="z-10 flex items-center gap-1.5 h-full px-4 border-r border-red-500/15 bg-[#0a0d16] text-[10px] font-black uppercase tracking-wider text-red-400 shrink-0">
-        <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-ping"></span>
+      <div className="z-10 flex items-center gap-1.5 h-full px-4 border-r border-rose-500/30 bg-rose-950/60 text-[10px] font-mono font-black uppercase tracking-wider text-rose-300 shrink-0 backdrop-blur-md">
+        <span className="h-2 w-2 rounded-full bg-rose-400 animate-ping"></span>
         Alert Ticker
       </div>
 
@@ -37,15 +37,15 @@ export default function AlertTicker() {
         <div className="animate-marquee gap-8">
           {tickerItems.map((alert, idx) => (
             <div key={idx} className="flex items-center gap-2 text-xs select-none">
-              <span className="font-bold text-red-400 uppercase tracking-wide px-1.5 py-0.5 rounded bg-red-500/10 border border-red-500/20 text-[9px]">
+              <span className="font-bold text-rose-300 uppercase tracking-wide px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-[9px] font-mono shadow-sm">
                 {alert.alert_type}
               </span>
-              <span className="font-mono text-gray-500">[{alert.node_id}]</span>
-              <span className="text-gray-300 font-medium">{alert.message}</span>
-              <span className="text-gray-500 font-mono text-[10px]">
+              <span className="font-mono text-cyan-300 text-[11px]">[{alert.node_id}]</span>
+              <span className="text-gray-200 font-medium">{alert.message}</span>
+              <span className="text-gray-400 font-mono text-[10px]">
                 {new Date(alert.timestamp).toLocaleTimeString()}
               </span>
-              <span className="text-red-500/20 mx-4 font-bold">•</span>
+              <span className="text-rose-500/40 mx-4 font-bold">•</span>
             </div>
           ))}
         </div>
@@ -53,3 +53,4 @@ export default function AlertTicker() {
     </div>
   );
 }
+
