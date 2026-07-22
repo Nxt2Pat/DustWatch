@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useStore } from '../store';
 
 export interface BackgroundConfig {
   image_url: string;
@@ -39,6 +41,8 @@ export function saveLocalBackgroundConfig(config: BackgroundConfig) {
 
 export default function DynamicBackground() {
   const [config, setConfig] = useState<BackgroundConfig>(getLocalBackgroundConfig);
+  const location = useLocation();
+  const nodesMeta = useStore((state) => state.nodesMeta);
 
   useEffect(() => {
     // 1. Fetch initial config from backend API
@@ -86,11 +90,24 @@ export default function DynamicBackground() {
     };
   }, []);
 
-  if (!config.active || !config.image_url) {
+  // Check if current page is station detail (/station/:id)
+  let nodeSpecificImageUrl: string | null = null;
+  const match = location.pathname.match(/\/station(?:s|-detail)?\/([^/]+)/i);
+  if (match && match[1]) {
+    const stationId = match[1];
+    const nodeImage = nodesMeta[stationId]?.image_url;
+    if (nodeImage && nodeImage.trim() !== '') {
+      nodeSpecificImageUrl = nodeImage;
+    }
+  }
+
+  const activeImageUrl = nodeSpecificImageUrl || config.image_url;
+
+  if (!config.active || !activeImageUrl) {
     return null;
   }
 
-  const bgUrl = config.image_url.startsWith('/') ? config.image_url : config.image_url;
+  const bgUrl = activeImageUrl.startsWith('/') ? activeImageUrl : activeImageUrl;
 
   const getOverlayClass = () => {
     switch (config.overlay_mode) {
