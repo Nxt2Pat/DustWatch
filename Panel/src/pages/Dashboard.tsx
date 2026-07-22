@@ -257,7 +257,12 @@ export default function Dashboard() {
     setIsBgManagerOpen(true);
   };
 
-  const handleUploadBgFile = async (files: FileList | File[]) => {
+  const handleUploadBgFile = async (files: FileList | File[], targetNodeId: string = 'global') => {
+    if (targetNodeId !== 'global') {
+      await handleUploadNodePhoto(targetNodeId, files);
+      return;
+    }
+
     setIsUploadingBg(true);
     try {
       const formData = new FormData();
@@ -343,19 +348,34 @@ export default function Dashboard() {
       const json = await res.json();
       if (json.ok && json.data) {
         const uploadedUrls: string[] = json.data.image_urls || (json.data.image_url ? [json.data.image_url] : []);
-        setTempConfigs((prev) => {
-          const current = prev[nodeId];
-          const existingList = current?.image_urls || (current?.image_url ? [current.image_url] : []);
-          const mergedList = Array.from(new Set([...existingList, ...uploadedUrls]));
-          return {
-            ...prev,
-            [nodeId]: {
-              ...current,
-              image_url: mergedList[0] || current?.image_url || '',
-              image_urls: mergedList
-            }
-          };
+        
+        const currentConf = tempConfigs[nodeId] || nodesMeta[nodeId] || {};
+        const existingList = currentConf.image_urls || (currentConf.image_url ? [currentConf.image_url] : []);
+        const mergedList = Array.from(new Set([...existingList, ...uploadedUrls]));
+        const primaryImg = mergedList[0] || currentConf.image_url || '';
+
+        setTempConfigs((prev) => ({
+          ...prev,
+          [nodeId]: {
+            ...prev[nodeId],
+            image_url: primaryImg,
+            image_urls: mergedList
+          }
+        }));
+
+        setNodesMeta({
+          ...nodesMeta,
+          [nodeId]: {
+            ...nodesMeta[nodeId],
+            image_url: primaryImg,
+            image_urls: mergedList
+          }
         });
+
+        // Auto-save to SQLite DB immediately so uploaded node photos persist
+        await handleSaveNodeBackground(nodeId, primaryImg, mergedList);
+        setBgSaveMsg(`อัปโหลดและบันทึกรูปภาพโหนด ${nodeId} เรียบร้อยแล้ว (${uploadedUrls.length} รูป)`);
+        setTimeout(() => setBgSaveMsg(null), 3000);
       } else {
         const errTxt = json.error || json.detail || json.message || 'อัปโหลดไม่สำเร็จ';
         alert(errTxt);

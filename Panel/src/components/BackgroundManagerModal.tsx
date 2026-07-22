@@ -26,7 +26,7 @@ interface BackgroundManagerModalProps {
   config: BackgroundConfig;
   onChangeConfig: (newConfig: BackgroundConfig) => void;
   onSave: () => void;
-  onUploadFile: (files: FileList | File[]) => void;
+  onUploadFile: (files: FileList | File[], targetNodeId?: string) => void;
   isUploading: boolean;
   saveMsg: string | null;
   // Per-Node Extension
@@ -313,7 +313,7 @@ export default function BackgroundManagerModal({
                   multiple
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
-                      onUploadFile(e.target.files);
+                      onUploadFile(e.target.files, selectedTargetNodeId);
                     }
                   }}
                   className="hidden"
