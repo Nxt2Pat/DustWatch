@@ -106,7 +106,8 @@ export default function DynamicBackground() {
   const match = location.pathname.match(/\/station(?:s|-detail)?\/([^/]+)/i);
   if (match && match[1]) {
     const stationId = match[1];
-    const meta = nodesMeta[stationId];
+    const metaKey = Object.keys(nodesMeta).find((k) => k.toLowerCase() === stationId.toLowerCase()) || stationId;
+    const meta = nodesMeta[metaKey];
     if (meta) {
       if (meta.image_urls && meta.image_urls.length > 0) {
         activeImageList = meta.image_urls;

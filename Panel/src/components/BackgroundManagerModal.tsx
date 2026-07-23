@@ -109,7 +109,7 @@ export default function BackgroundManagerModal({
   useEffect(() => {
     if (!isOpen || imagesList.length <= 1 || (isGlobal && config.mode === 'static')) return;
     const interval = setInterval(() => {
-      setPreviewIndex((prev) => (prev + 1) % imagesList.length);
+      setPreviewIndex((prev) => (prev + 1) % Math.max(1, imagesList.length));
     }, Math.max(2, config.slideshow_interval_sec || 10) * 1000);
     return () => clearInterval(interval);
   }, [isOpen, imagesList.length, config.slideshow_interval_sec, config.mode, isGlobal]);
@@ -164,6 +164,9 @@ export default function BackgroundManagerModal({
 
   const formatUrl = (url: string) => {
     if (!url) return '';
+    if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
     return url.startsWith('/') ? `${getApiBaseUrl()}${url}` : url;
   };
 
@@ -341,7 +344,14 @@ export default function BackgroundManagerModal({
                           isPrimary ? 'border-emerald-500 shadow-lg shadow-emerald-500/20' : 'border-white/10 opacity-70 hover:opacity-100'
                         }`}
                       >
-                        <img src={formatUrl(url)} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                        <img
+                          src={formatUrl(url)}
+                          alt={`Gallery ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=800&q=80';
+                          }}
+                        />
                         
                         {/* Primary Badge */}
                         {isPrimary && (

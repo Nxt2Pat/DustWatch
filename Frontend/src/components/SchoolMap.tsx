@@ -69,6 +69,14 @@ export default function SchoolMap() {
   // Keep track of room bounding meshes for raycasting
   const roomMeshesRef = useRef<{ id: string; mesh: THREE.Mesh; defaultColor: number }[]>([]);
 
+  const selectedFloorRef = useRef(selectedFloor);
+  const autoRotateRef = useRef(autoRotate);
+  const showWavesRef = useRef(showWaves);
+
+  useEffect(() => { selectedFloorRef.current = selectedFloor; }, [selectedFloor]);
+  useEffect(() => { autoRotateRef.current = autoRotate; }, [autoRotate]);
+  useEffect(() => { showWavesRef.current = showWaves; }, [showWaves]);
+
   // Filter out inactive nodes from nodesMeta
   const activeNodes = Object.entries(latest)
     .filter(([id]) => {
@@ -522,7 +530,7 @@ export default function SchoolMap() {
         controlsRef.current.update();
       }
 
-      if (autoRotate && !hoveredMeshId) {
+      if (autoRotateRef.current && !hoveredMeshId) {
         scene.rotation.y += 0.003;
       }
 
@@ -531,15 +539,16 @@ export default function SchoolMap() {
       let targetY2 = 0;
       let targetY3 = 9;
 
-      if (selectedFloor === '1') {
+      const currentSelectedFloor = selectedFloorRef.current;
+      if (currentSelectedFloor === '1') {
         targetY1 = 0;
         targetY2 = 30;
         targetY3 = 60;
-      } else if (selectedFloor === '2') {
+      } else if (currentSelectedFloor === '2') {
         targetY1 = -30;
         targetY2 = 0;
         targetY3 = 30;
-      } else if (selectedFloor === '3') {
+      } else if (currentSelectedFloor === '3') {
         targetY1 = -60;
         targetY2 = -30;
         targetY3 = 0;
@@ -568,23 +577,23 @@ export default function SchoolMap() {
         });
       };
 
-      adjustOpacity(floor1Group, selectedFloor, '1');
-      adjustOpacity(floor2Group, selectedFloor, '2');
-      adjustOpacity(floor3Group, selectedFloor, '3');
+      adjustOpacity(floor1Group, currentSelectedFloor, '1');
+      adjustOpacity(floor2Group, currentSelectedFloor, '2');
+      adjustOpacity(floor3Group, currentSelectedFloor, '3');
 
       // Ripples
       ripplesRef.current.forEach((ripple) => {
-        if (!showWaves) {
+        if (!showWavesRef.current) {
           ripple.mesh.visible = false;
           return;
         }
 
         const meshParent = ripple.mesh.parent?.parent?.parent;
         if (meshParent) {
-          const isFloorHidden = selectedFloor !== 'all' && 
-            ((selectedFloor === '1' && meshParent !== floor1Group) ||
-             (selectedFloor === '2' && meshParent !== floor2Group) ||
-             (selectedFloor === '3' && meshParent !== floor3Group));
+          const isFloorHidden = currentSelectedFloor !== 'all' && 
+            ((currentSelectedFloor === '1' && meshParent !== floor1Group) ||
+             (currentSelectedFloor === '2' && meshParent !== floor2Group) ||
+             (currentSelectedFloor === '3' && meshParent !== floor3Group));
           
           if (isFloorHidden) {
             ripple.mesh.visible = false;
@@ -620,7 +629,7 @@ export default function SchoolMap() {
       scene.clear();
       renderer.dispose();
     };
-  }, [selectedFloor, autoRotate, showWaves, rooms]);
+  }, [rooms]);
 
   return (
     <div className="premium-card p-6 flex flex-col relative overflow-hidden bg-white/70 backdrop-blur-md">

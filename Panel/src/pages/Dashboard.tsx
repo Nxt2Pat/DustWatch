@@ -9,6 +9,7 @@ import AlertTicker from '../components/alerts/AlertTicker';
 import EmptyState from '../components/ui/EmptyState';
 import MapPositionEditor from '../components/MapPositionEditor';
 import BackgroundManagerModal, { type BackgroundConfig } from '../components/BackgroundManagerModal';
+import { compressMultipleFiles } from '../utils/imageCompressor';
 
 import { getApiBaseUrl } from '../api/sourceConfig';
 
@@ -265,34 +266,53 @@ export default function Dashboard() {
 
     setIsUploadingBg(true);
     try {
-      const formData = new FormData();
-      const fileArray = Array.from(files);
-      fileArray.forEach((f) => {
-        formData.append('files', f);
-      });
-
-      const res = await fetch(`${API_BASE}/api/v1/system/background/upload`, {
-        method: 'POST',
-        body: formData
-      });
-      const json = await res.json();
-      if (json.ok && json.data) {
-        const uploadedUrls: string[] = json.data.image_urls || (json.data.image_url ? [json.data.image_url] : []);
+      // 1. Client-side instant Data URI compression for 100% Vercel compatibility
+      const dataUrls = await compressMultipleFiles(files);
+      if (dataUrls.length > 0) {
         setBgConfig(prev => {
           const existing = prev.image_urls || (prev.image_url ? [prev.image_url] : []);
-          const merged = Array.from(new Set([...existing, ...uploadedUrls]));
+          const merged = Array.from(new Set([...dataUrls, ...existing]));
           return {
             ...prev,
             image_url: merged[0] || prev.image_url,
             image_urls: merged
           };
         });
-        setBgSaveMsg(`อัปโหลดไฟล์ภาพเรียบร้อยแล้ว (${uploadedUrls.length} รูป)`);
-        setTimeout(() => setBgSaveMsg(null), 3000);
-      } else {
-        const errTxt = json.error || json.detail || json.message || 'Failed to upload image files';
-        alert(errTxt);
       }
+
+      // 2. Upload to backend if backend API is reachable
+      try {
+        const formData = new FormData();
+        const fileArray = Array.from(files);
+        fileArray.forEach((f) => {
+          formData.append('files', f);
+        });
+
+        const res = await fetch(`${API_BASE}/api/v1/system/background/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.ok && json.data) {
+            const uploadedUrls: string[] = json.data.image_urls || (json.data.image_url ? [json.data.image_url] : []);
+            setBgConfig(prev => {
+              const existing = prev.image_urls || (prev.image_url ? [prev.image_url] : []);
+              const merged = Array.from(new Set([...existing, ...uploadedUrls, ...dataUrls]));
+              return {
+                ...prev,
+                image_url: merged[0] || prev.image_url,
+                image_urls: merged
+              };
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Backend API unreachable, saved Data URIs to browser config', err);
+      }
+
+      setBgSaveMsg(`อัปโหลดภาพเรียบร้อยแล้ว (${dataUrls.length} รูป)`);
+      setTimeout(() => setBgSaveMsg(null), 3000);
     } catch (e) {
       console.error('Failed to upload image', e);
       alert('Upload failed: ' + (e instanceof Error ? e.message : String(e)));
@@ -309,24 +329,23 @@ export default function Dashboard() {
         body: JSON.stringify(bgConfig)
       });
       await res.json();
-      
-      // Save to localStorage & broadcast via BroadcastChannel
-      localStorage.setItem('dustwatch_bg_config', JSON.stringify(bgConfig));
-      try {
-        const channel = new BroadcastChannel('dustwatch_background');
-        channel.postMessage(bgConfig);
-        channel.close();
-      } catch (e) {}
-
-      setBgSaveMsg('บันทึกรูปภาพสไลด์โชว์และส่งสัญญาณอัปเดตเรียบร้อยแล้ว!');
-      setTimeout(() => {
-        setBgSaveMsg(null);
-        setIsBgManagerOpen(false);
-      }, 1500);
     } catch (e) {
-      console.error('Failed to save background config', e);
-      alert('Failed to save background settings');
+      console.warn('Backend save skipped, persisting to localStorage', e);
     }
+      
+    // Save to localStorage & broadcast via BroadcastChannel
+    localStorage.setItem('dustwatch_bg_config', JSON.stringify(bgConfig));
+    try {
+      const channel = new BroadcastChannel('dustwatch_background');
+      channel.postMessage(bgConfig);
+      channel.close();
+    } catch (e) {}
+
+    setBgSaveMsg('บันทึกรูปภาพสไลด์โชว์และส่งสัญญาณอัปเดตเรียบร้อยแล้ว!');
+    setTimeout(() => {
+      setBgSaveMsg(null);
+      setIsBgManagerOpen(false);
+    }, 1500);
   };
 
   // ─── Node Photo Upload States & Handlers ───
@@ -335,51 +354,59 @@ export default function Dashboard() {
   const handleUploadNodePhoto = async (nodeId: string, files: FileList | File[]) => {
     setIsUploadingNodePhoto(true);
     try {
-      const formData = new FormData();
-      const fileArray = Array.from(files);
-      fileArray.forEach((f) => {
-        formData.append('files', f);
+      // 1. Client-side instant Data URI compression for 100% Vercel compatibility
+      const dataUrls = await compressMultipleFiles(files);
+      const currentConf = tempConfigs[nodeId] || nodesMeta[nodeId] || {};
+      const existingList = currentConf.image_urls || (currentConf.image_url ? [currentConf.image_url] : []);
+      let mergedList = Array.from(new Set([...dataUrls, ...existingList]));
+      let primaryImg = mergedList[0] || currentConf.image_url || '';
+
+      setTempConfigs((prev) => ({
+        ...prev,
+        [nodeId]: {
+          ...prev[nodeId],
+          image_url: primaryImg,
+          image_urls: mergedList
+        }
+      }));
+
+      setNodesMeta({
+        ...nodesMeta,
+        [nodeId]: {
+          ...nodesMeta[nodeId],
+          image_url: primaryImg,
+          image_urls: mergedList
+        }
       });
 
-      const res = await fetch(`${API_BASE}/api/v1/nodes/${nodeId}/upload-image`, {
-        method: 'POST',
-        body: formData
-      });
-      const json = await res.json();
-      if (json.ok && json.data) {
-        const uploadedUrls: string[] = json.data.image_urls || (json.data.image_url ? [json.data.image_url] : []);
-        
-        const currentConf = tempConfigs[nodeId] || nodesMeta[nodeId] || {};
-        const existingList = currentConf.image_urls || (currentConf.image_url ? [currentConf.image_url] : []);
-        const mergedList = Array.from(new Set([...existingList, ...uploadedUrls]));
-        const primaryImg = mergedList[0] || currentConf.image_url || '';
-
-        setTempConfigs((prev) => ({
-          ...prev,
-          [nodeId]: {
-            ...prev[nodeId],
-            image_url: primaryImg,
-            image_urls: mergedList
-          }
-        }));
-
-        setNodesMeta({
-          ...nodesMeta,
-          [nodeId]: {
-            ...nodesMeta[nodeId],
-            image_url: primaryImg,
-            image_urls: mergedList
-          }
+      // 2. Try sending to backend API if reachable
+      try {
+        const formData = new FormData();
+        const fileArray = Array.from(files);
+        fileArray.forEach((f) => {
+          formData.append('files', f);
         });
 
-        // Auto-save to SQLite DB immediately so uploaded node photos persist
-        await handleSaveNodeBackground(nodeId, primaryImg, mergedList);
-        setBgSaveMsg(`อัปโหลดและบันทึกรูปภาพโหนด ${nodeId} เรียบร้อยแล้ว (${uploadedUrls.length} รูป)`);
-        setTimeout(() => setBgSaveMsg(null), 3000);
-      } else {
-        const errTxt = json.error || json.detail || json.message || 'อัปโหลดไม่สำเร็จ';
-        alert(errTxt);
+        const res = await fetch(`${API_BASE}/api/v1/nodes/${nodeId}/upload-image`, {
+          method: 'POST',
+          body: formData
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.ok && json.data) {
+            const uploadedUrls: string[] = json.data.image_urls || (json.data.image_url ? [json.data.image_url] : []);
+            mergedList = Array.from(new Set([...existingList, ...uploadedUrls, ...dataUrls]));
+            primaryImg = mergedList[0] || currentConf.image_url || '';
+          }
+        }
+      } catch (err) {
+        console.warn('Backend API upload skipped, saved Data URIs locally', err);
       }
+
+      // Auto-save to SQLite DB / localStorage immediately
+      await handleSaveNodeBackground(nodeId, primaryImg, mergedList);
+      setBgSaveMsg(`อัปโหลดและบันทึกรูปภาพโหนด ${nodeId} เรียบร้อยแล้ว (${dataUrls.length} รูป)`);
+      setTimeout(() => setBgSaveMsg(null), 3000);
     } catch (e) {
       console.error('Failed to upload node photo', e);
       alert('อัปโหลดไม่สำเร็จ');
