@@ -458,11 +458,17 @@ export default function Dashboard() {
         setBgSaveMsg(`บันทึกภาพพื้นหลังประจำโหนด ${nodeId} เรียบร้อยแล้ว!`);
         setTimeout(() => setBgSaveMsg(null), 3000);
       } else {
-        alert(json.error || json.detail || 'Failed to update node background');
+        const errObj = json.error || json.detail || 'Failed to update node background';
+        const errMsg = typeof errObj === 'string'
+          ? errObj
+          : (Array.isArray(errObj)
+            ? errObj.map((d: any) => d.msg || JSON.stringify(d)).join('\n')
+            : JSON.stringify(errObj));
+        alert(errMsg);
       }
     } catch (e) {
       console.error('Failed to save node background', e);
-      alert('Failed to save node background');
+      alert('Failed to save node background: ' + (e instanceof Error ? e.message : String(e)));
     }
   };
 
